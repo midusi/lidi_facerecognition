@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from PyQt5.QtCore import (Qt,QTimer)
 from PyQt5.QtGui import (QPixmap, QImage)
 from PyQt5.QtWidgets import QFrame, QLabel, QVBoxLayout, QSizePolicy
-from cv2utils import draw_cut_rectangle
+from frontend.cv2utils import draw_cut_rectangle
 
 import settings
 import time

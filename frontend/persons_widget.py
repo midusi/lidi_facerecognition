@@ -37,10 +37,19 @@ class AvatarLabel(QLabel):
         self.setPixmap(self.target)
 
 
-class PersonsWidget(QFrame):
+class PersonsPanel(QFrame):
     def __init__(self,person_db,parent=None):
         super().__init__(parent=parent)
+        self.persons_widget=PersonsWidget(person_db,"",self)
+
+
+
+
+class PersonsWidget(QFrame):
+    def __init__(self,person_db,title,parent=None):
+        super().__init__(parent=parent)
         self.person_db=person_db
+        self.title=title
         self.persons_detected_layout = QVBoxLayout()
         self.setStyleSheet("PersonsWidget {width:100%;"
                            # "margin-top:30px;"
@@ -60,18 +69,36 @@ class PersonsWidget(QFrame):
     def update_persondb(self,persondb):
         self.person_db=persondb
 
-    def update_persons(self, tracked_objects):
+    def remove_all_widgets(self, layout):
+        for i in reversed(range(layout.count())):
+            widgetToRemove = layout.itemAt(i).widget()
+            # remove it from the layout list
+            layout.removeWidget(widgetToRemove)
+            # remove it from the gui
+            widgetToRemove.setParent(None)
 
-        self.remove_all_widgets(self.persons_detected_layout)
-        for tracked_object in tracked_objects:
+class RecognizedPersonsWidget(PersonsWidget):
+    def __init__(self, person_db, title, parent=None):
+        super().__init__(person_db,title,parent=parent)
 
-            name,description,image,status=self.get_object_data(tracked_object)
-            person_widget=PersonWidget(name,description,image,status)
-            self.persons_detected_layout.addWidget(person_widget)
+    def get_object_data(self, tracked_object):
+        return "asd"
+
+class TrackedPersonsWidget(PersonsWidget):
+    def __init__(self, person_db, title, parent=None):
+        super().__init__(person_db, title, parent=parent)
 
     def cv_to_pil(self,image):
         image = cv2.cvtColor(image , cv2.COLOR_BGR2RGB)
         return Image.fromarray(image )
+
+    def update_persons(self, tracked_objects):
+        self.remove_all_widgets(self.persons_detected_layout)
+        for tracked_object in tracked_objects:
+            name,description,image,status=self.get_object_data(tracked_object)
+            # print(f"Recognized {name}")
+            person_widget=PersonWidget(name,description,image,status)
+            self.persons_detected_layout.addWidget(person_widget)
 
     def get_object_data(self,tracked_object):
         status=tracked_object.get_status()
@@ -93,23 +120,7 @@ class PersonsWidget(QFrame):
 
         return name,description,image,status
 
-    def remove_all_widgets(self, layout):
-        for i in reversed(range(layout.count())):
-            widgetToRemove = layout.itemAt(i).widget()
-            # remove it from the layout list
-            layout.removeWidget(widgetToRemove)
-            # remove it from the gui
-            widgetToRemove.setParent(None)
 
-def pil2pixmap( im):
-    if im.mode == "RGB":
-        pass
-    elif im.mode == "L":
-        im = im.convert("RGBA")
-    data = im.convert("RGBA").tobytes("raw", "RGBA")
-    qim = QtGui.QImage(data, im.size[0], im.size[1], QtGui.QImage.Format_RGBA8888)
-    pixmap = QtGui.QPixmap.fromImage(qim)
-    return pixmap
 
 class PersonWidget(QFrame):
 
@@ -120,7 +131,7 @@ class PersonWidget(QFrame):
         self.set_style()
 
 
-        self.profile_pixmap = pil2pixmap(avatar)
+        self.profile_pixmap = self.pil2pixmap(avatar)
 
         self.profile_photo= AvatarLabel(self.profile_pixmap)
         self.profile_photo.setStyleSheet("AvatarLabel{ border-bottom:none;"
@@ -190,6 +201,16 @@ class PersonWidget(QFrame):
         jobs_label.setText(description)
         name_layout.addWidget(jobs_label, 0, Qt.AlignLeft)
         return container
+
+    def pil2pixmap(self,im):
+        if im.mode == "RGB":
+            pass
+        elif im.mode == "L":
+            im = im.convert("RGBA")
+        data = im.convert("RGBA").tobytes("raw", "RGBA")
+        qim = QtGui.QImage(data, im.size[0], im.size[1], QtGui.QImage.Format_RGBA8888)
+        pixmap = QtGui.QPixmap.fromImage(qim)
+        return pixmap
 
 
 

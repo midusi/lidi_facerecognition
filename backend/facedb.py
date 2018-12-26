@@ -69,7 +69,7 @@ def load_images_and_generate_db(persondb,person_images_paths,previous_x,previous
     n=sum([len(v) for k,v in person_images_paths.items()])
     print(f"{n} images found total.")
     y_train = np.zeros((n))
-    x_train = np.zeros((n,settings.embedding_length))
+    x_train = np.zeros((n,settings.recognition.embedding_length))
     all_paths=[]
 
     i=0

@@ -10,8 +10,8 @@ class CaptureWorker(QObject):
 
     def __init__(self,face_recognizer,settings,persondb,parent=None):
         super().__init__(parent)
-        self.face_recognizer=face_recognizer
-        self.persondb=persondb
+        self.face_recognizer = face_recognizer
+        self.persondb = persondb
         self.frame=0
         self.person_detections=[]
         self.settings=settings

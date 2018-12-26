@@ -13,7 +13,7 @@ number_of_times_to_upsample=1
 frame_skip=8
 
 class Input:
-    stream_url = 0
+    #stream_url = "/dev/video1"
     stream_url = "rtsp://163.10.22.229/live.sdp"
     # stream_url="http://163.10.22.229/video2.mjpg"
     # ffplay -fflags nobuffer -rtsp_transport udp rtsp://163.10.22.229/live.sdp
@@ -35,9 +35,11 @@ gui=GUI()
 
 
 class FaceRecognition:
-    #downsampling to apply before recognition
-    face_image_extension_factor=0.4
-    downsampling = 2
+    #
+    face_image_extension_factor=1
+
+    # downsampling to apply before recognition
+    downsampling = 1
 
     # size of embedding vector the cnn outputs
     embedding_length=128
@@ -47,6 +49,8 @@ recognition=FaceRecognition()
 class Learning:
     # save images of the faces of people unrecognized by the system
     save_unrecognized_peoples_faces = True
+    save_recognized_peoples_faces = True
+    save_full_images = False
 learning=Learning()
 
 class Sound:
@@ -66,7 +70,7 @@ class TrackingSettings:
     iou_threshold = 0.1  # range [0-1]
 
     # minimum time to live in msecs for a detection window
-    ttl_initial = 500
+    ttl_initial = 50
 
     # minimum time in ms before a prediction is emitted
     warmup_time = 0
@@ -83,13 +87,13 @@ tracking = TrackingSettings()
 
 class Client:
     throttle_requests = 1 / 30
-    display_delay = 800
+    display_delay = 0
 
 client=Client()
 
 
 class Capture:
-    frame_skip=5
+    frame_skip=2
     max_elements_in_queue=2
     different_images_threshold=30
 

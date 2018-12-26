@@ -56,7 +56,7 @@ class CaptureWorker:
             if frame_ready:
                 distance=np.mean(np.abs(last_image-image))
                 last_image=image.copy()
-                logging.info(f"L1 distance between images: {distance}")
+                # logging.info(f"L1 distance between images: {distance}")
                 if distance>self.settings.capture.different_images_threshold:
                     if self.image_queue.qsize()<self.settings.capture.max_elements_in_queue:
                         self.image_queue.put(image)
@@ -64,8 +64,6 @@ class CaptureWorker:
                 if not self.stop:
                     logging.info("stopped capturing")
                 self.stop = True
-
-            # logging.info(f"{self.image_queue.qsize()} in queue, "+profiler.summary())
             profiler.reset()
         logging.info("Stopped capture worker")
 
@@ -143,38 +141,63 @@ class RecognitionWorker:
         profiler.event("end")
         # logging.info(profiler.summary())
 
+    def create_folders(self):
+        time_in_ms = time.time()
+        time_struct = time.localtime(time_in_ms)
+        ms = time_in_ms % 1
+        time_microseconds = int(ms * 1000)
+        folder_format = '%Y-%m-%d'.format(time_microseconds)
+        foldername = time.strftime(folder_format, time_struct)
+        folderpath = os.path.join(self.settings.capture_path, foldername)
+        recognized_subfolder = "recognized"
+        recognized_folderpath = os.path.join(folderpath, recognized_subfolder)
+        if not os.path.exists(folderpath):
+            logging.info(f"Creating folder {folderpath}...")
+            os.mkdir(folderpath)
+            os.mkdir(recognized_folderpath)
+        file_format = '%Y-%m-%d_%H:%M:%S:{}'.format(time_microseconds)
+        filename = time.strftime(file_format, time_struct)
+
+        return folderpath,recognized_folderpath,filename
 
     def save_unrecognized_peoples_faces(self,image,tracked_objects):
-        for detection in tracked_objects:
 
-            if not detection.recognized():
+        for detection in tracked_objects:
+            recognized=detection.recognized()
+            save_recognized=  recognized and self.settings.learning.save_recognized_peoples_faces
+            save_unrecognized = (not recognized) and self.settings.learning.save_unrecognized_peoples_faces
+
+            if save_unrecognized  or save_recognized:
+
                 top, right, bottom, left = detection.bbox()
                 w, h = right - left, bottom - top
                 if w>10 and h>10:
-                    time_in_ms = time.time()
-                    time_struct = time.localtime(time_in_ms)
-                    ms = time_in_ms % 1
-                    time_microseconds=int(ms * 1000)
 
                     #get folderpath and create if non existent
-                    folder_format= '%Y-%m-%d'.format(time_microseconds)
-                    foldername = time.strftime(folder_format, time_struct)
-                    folderpath=os.path.join(self.settings.capture_path, foldername)
-                    if not os.path.exists(folderpath):
-                        logging.info(f"Creating folder {folderpath}...")
-                        os.mkdir(folderpath)
+                    folderpath, recognized_folderpath,filename =self.create_folders()
+                    if recognized:
+                        class_id, probability = detection.maximum_a_posteriori()
+                        person=self.persondb[class_id]
 
+                        recognized_folderpath=os.path.join(recognized_folderpath,person.foldername)
+                        if not os.path.exists(recognized_folderpath):
+                            os.mkdir(recognized_folderpath)
+                        filename=f"{filename}_p{probability:0.2}"
+
+                    save_folderpath = recognized_folderpath if recognized else folderpath
                     #generate filepath
-                    file_format='%H:%M:%S:{}'.format(time_microseconds)
-                    filename= time.strftime(file_format, time_struct)
-                    filepath = os.path.join(folderpath, f"{filename}.png")
-
+                    filepath = os.path.join(save_folderpath, f"{filename}.png")
                     #get face subimage
                     face_image=image[top:bottom,left:right,:]
+
+                    face_image=face_image.copy()
                     #self.image_saving_queue.put((image, self.tracked_objects))
                     self.image_saving_queue.put((filepath,face_image))
                     #save image
                     #cv2.imwrite(filepath, face_image)
+                    if self.settings.learning.save_full_images:
+                        full_image_filepath = os.path.join(save_folderpath, f"{filename}_full_{[top,left,w,h]}.png")
+                        cv2.imwrite(full_image_filepath , image)
 
 
 
@@ -215,6 +238,7 @@ class ServerWorker:
             client_sock, address = self.server.accept()
 
             logging.info('Accepted connection from {}:{}'.format(address[0], address[1]))
+            print('Accepted connection from {}:{}'.format(address[0], address[1]))
             client_handler = threading.Thread(
                 target=self.handle_client_connection,
                 args=(client_sock,address)

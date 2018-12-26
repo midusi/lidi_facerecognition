@@ -9,9 +9,9 @@ from frontend.retrain_worker import RetrainWorker
 import settings
 import logging
 
-from capture_thread import CaptureWorker
-from recognition_thread import RecognitionWorker
-from frontend.persons_widget import PersonsWidget
+from frontend.capture_worker import CaptureWorker
+from frontend.recognition_worker import RecognitionWorker
+from frontend.persons_widget import TrackedPersonsWidget
 from frontend.greeting import  GreetingWorker
 
 class App(QFrame):
@@ -24,21 +24,18 @@ class App(QFrame):
         self.title = settings.gui.application_name
         self.setObjectName('App')
         self.face_recognizer=face_recognizer
-        #self.threadpool = QThreadPool()
-        # print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
         self.initUI()
 
 
 
     def initUI(self):
 
-
         self.topbar=TopBarWidget()
         self.topbar.layout().setAlignment(Qt.AlignTop)
 
         self.capture_widget=CaptureWidget(person_db)
         # # RECOGNITION INFO
-        self.persons_widget= PersonsWidget(person_db)
+        self.persons_widget= TrackedPersonsWidget(person_db,"")
 
         self.recognition_info= QHBoxLayout()
         self.recognition_info.setSpacing(0)

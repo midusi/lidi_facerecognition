@@ -32,7 +32,7 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
 
     def handle_http(self, status_code, path):
         self.send_response(status_code)
-        self.send_header('Content-type', ' application/octet-stream')
+        self.send_header('Content-type', 'application/octet-stream')
         self.end_headers()
         w = self.server.recognition_worker
         while not w.tracked_objects_queue.empty():
@@ -41,7 +41,7 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
         # content = f"Tracked objects:\n {descriptions}"
 
         objects = self.server.tracked_objects #w.tracked_objects.copy()
-        # logging.info(f"response with {w.tracked_objects} objects ({objects}).")
+        #logging.info(f"response with {w.tracked_objects} objects ({objects}).")
         pickled_objects = pickle.dumps(objects)
         return pickled_objects
 
