@@ -1,9 +1,12 @@
-from sklearn.externals import joblib
 import face_recognition #https://github.com/ageitgey/face_recognition
+
+from sklearn.externals import joblib
+
 import numpy as np
 import cv2
 import utils
 import logging
+
 class PersonDetection:
     def __init__(self,class_id,bbox,class_probabilities,face_image):
         self.class_id=class_id

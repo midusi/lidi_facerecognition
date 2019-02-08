@@ -3,7 +3,11 @@ import math
 from datetime import datetime
 
 import cv2
+
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 from PyQt5.QtCore import (Qt,QTimer)
 from PyQt5.QtGui import (QPixmap, QImage)
 from PyQt5.QtWidgets import QFrame, QLabel, QVBoxLayout, QSizePolicy

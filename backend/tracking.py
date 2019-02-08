@@ -1,5 +1,5 @@
-import numpy as np
 from utils import Clock
+import numpy as np
 from enum import Enum
 
 class TrackingStatus(Enum):

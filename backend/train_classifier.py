@@ -1,5 +1,7 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from sklearn import svm
 from sklearn.externals import joblib
 from sklearn.metrics import classification_report, confusion_matrix

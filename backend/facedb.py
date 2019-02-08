@@ -2,7 +2,9 @@ import face_recognition
 import os
 import settings
 import numpy as np
+
 import skimage,skimage.io,skimage.exposure
+
 import json
 from PIL import Image
 

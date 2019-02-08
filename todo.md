@@ -1,8 +1,4 @@
 ## Face Recognition app TODO
-
-
-
-
 ---------------------------------
 
 * Tracking
