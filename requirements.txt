@@ -4,11 +4,16 @@ pyqt5
 
 scikit-learn
 scikit-image
+scikit-video
+
+# sudo apt install ffmpeg
+ffmpeg
 
 # for speech synthesis, install espeak
 # sudo apt install libespeak1 libespeak-dev
-# then pyttsx3
 pyttsx3
+
+progressbar2
 
 # for the web server
 requests

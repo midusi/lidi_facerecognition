@@ -11,6 +11,7 @@ import multiprocessing
 import queue
 import numpy as np
 
+from backend import framediff
 
 class CaptureWorker:
 
@@ -54,18 +55,18 @@ class CaptureWorker:
             profiler.event("finished reading")
 
             if frame_ready:
-                distance=np.mean(np.abs(last_image-image))
-                last_image=image.copy()
                 # logging.info(f"L1 distance between images: {distance}")
-                if distance>self.settings.capture.different_images_threshold:
+                if framediff.image_changed(last_image,image,self.settings.capture.different_images_threshold):
                     if self.image_queue.qsize()<self.settings.capture.max_elements_in_queue:
                         self.image_queue.put(image)
+                last_image = image.copy()
             else:
                 if not self.stop:
                     logging.info("stopped capturing")
                 self.stop = True
             profiler.reset()
         logging.info("Stopped capture worker")
+
 
 class RecognitionWorker:
 
