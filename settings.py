@@ -13,8 +13,8 @@ number_of_times_to_upsample=1
 frame_skip=8
 
 class Input:
-    #stream_url = "/dev/video1"
-    stream_url = "rtsp://163.10.22.229/live.sdp"
+    stream_url = "/dev/video0"
+    #stream_url = "rtsp://163.10.22.229/live.sdp"
     # stream_url="http://163.10.22.229/video2.mjpg"
     # ffplay -fflags nobuffer -rtsp_transport udp rtsp://163.10.22.229/live.sdp
 
@@ -94,7 +94,7 @@ client=Client()
 
 class Capture:
     frame_skip=2
-    max_elements_in_queue=2
-    different_images_threshold=30
+    max_elements_in_queue=3
+    different_images_threshold=1
 
 capture=Capture()

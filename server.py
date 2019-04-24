@@ -1,6 +1,7 @@
-from http.server import SimpleHTTPRequestHandler,HTTPServer
-from server.handlers import RecognitionRequestHandler
-from server.workers import CaptureWorker,RecognitionWorker,ServerWorker
+
+from server.capture import CaptureWorker
+from server.recognition import RecognitionWorker
+from server.serve import ServerWorker
 
 from backend import facedb
 from backend.face_recognizer import FaceEmbeddingClassifier, FaceRecognizer
@@ -20,6 +21,8 @@ def setup_thread(function, name):
     return thread
 
 
+
+
 def setup_process(function, name):
     process = multiprocessing.Process(target=function,name=name)
     process.start()
@@ -29,17 +32,21 @@ def setup_process(function, name):
 if __name__ == '__main__':
     import os
     print(os.getcwd(),"\n",__file__)
+
     def cleanup():
         logging.info("cleaning up...")
         server_process.terminate()
         recognition_process.terminate()
         capture_process.terminate()
+
+        capture_worker.stop=True
         recognition_worker.stop = True
         server.stop=True
+
         logging.info("finished cleaning up.")
 
 
-    logging.getLogger().setLevel(logging.INFO)
+    #logging.getLogger().setLevel(logging.INFO)
 
     manager = multiprocessing.Manager()
     shared_list = manager.list()
@@ -55,13 +62,8 @@ if __name__ == '__main__':
     recognition_worker  = RecognitionWorker(face_recognizer,settings,persondb,capture_worker)
     recognition_process = setup_process(recognition_worker.run, "Recognition Thread")
 
-
-    server = HTTPServer(('', 8000), RecognitionRequestHandler)
-    server.recognition_worker = recognition_worker
-    server.tracked_objects = []
-    server_process = setup_process(server.serve_forever, "Server Thread")
-    # server=ServerWorker(settings,recognition_worker)
-    # server_thread = setup_thread(server.run,"Server Thread")
+    server=ServerWorker(settings,recognition_worker)
+    server_thread = setup_process(server.run,"Server Thread")
 
     atexit.register(cleanup)
 
