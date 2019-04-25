@@ -1,5 +1,6 @@
 import multiprocessing
 from backend import framediff
+from backend import motion_detection
 import cv2
 import logging
 import utils
@@ -36,8 +37,8 @@ class CaptureWorker:
         while not frame_ready:
             frame_ready,image=cap.read()
 
-        last_image=image.copy()
         profiler=utils.Profiler()
+        motion_detector=motion_detection.AdaptativeContourDetector(threshold=self.settings.capture.motion_detection_treshold)
         logging.info(f"Capturing at {fw}x{fh}@{fps}, skip={self.settings.capture.frame_skip}")
         while not self.stop:
 
@@ -50,10 +51,9 @@ class CaptureWorker:
 
             if frame_ready:
                 # logging.info(f"L1 distance between images: {distance}")
-                if framediff.image_changed(last_image,image,self.settings.capture.different_images_threshold):
-                    if self.image_queue.qsize()<self.settings.capture.max_elements_in_queue:
+                if self.image_queue.qsize() < self.settings.capture.max_elements_in_queue:
+                    if motion_detector.update_and_detect(image):
                         self.image_queue.put(image)
-                last_image = image.copy()
             else:
                 if not self.stop:
                     logging.info("stopped capturing")

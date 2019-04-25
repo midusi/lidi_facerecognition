@@ -95,6 +95,6 @@ client=Client()
 class Capture:
     frame_skip=2
     max_elements_in_queue=3
-    different_images_threshold=1
+    motion_detection_treshold=1
 
 capture=Capture()
