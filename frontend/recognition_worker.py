@@ -19,7 +19,7 @@ class RecognitionWorker(QObject):
         self.settings=settings
         self.tracker=IOUTracker(settings)
 
-    persons_detected_signal = pyqtSignal(object)
+    persons_detected_signal = pyqtSignal(object,object)
     server_status_signal = pyqtSignal(object)
 
     def runHttp(self):
@@ -44,15 +44,20 @@ class RecognitionWorker(QObject):
                     self.server_status_signal.emit("offline")
             else:
                 try:
-                    tracked_objects = pickle.loads(r.content)
+
+                    tracked_objects,image = pickle.loads(r.content)
                     logging.debug("Received data: " + str(tracked_objects))
+                    self.persons_detected_signal.emit(tracked_objects, image)
                     if connection_error:
                         logging.warning(f"Server {url} available again.")
                         connection_error = False
                         self.server_status_signal.emit("online")
+
                 except (EOFError,pickle.UnpicklingError):
                     logging.warning(f"Message from server {url} could not be unpickled.")
                     connection_error = True
                     self.server_status_signal.emit("offline")
-            finally:
-                self.persons_detected_signal.emit(tracked_objects)
+
+
+
+

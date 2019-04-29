@@ -1,7 +1,7 @@
 
 import math
 from datetime import datetime
-
+import numpy as np
 import cv2
 
 import matplotlib
@@ -25,15 +25,18 @@ class CaptureWidget(QFrame):
         super().__init__(parent=parent)
         self.settings=settings
         self.persondb=persondb
-        self.cmap=plt.get_cmap("viridis")
 
-        self.video_label = QLabel(  )
-        w, h = settings.input.capture_resolution
-        self.video_label.resize(w, h)
+
+        self.initialize_video_label()
+
+        self.initialize_layout()
+
+        self.tracked_objects=[]
+    def initialize_layout(self):
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.video_label)
         self.setStyleSheet("QFrame {background-color: blue;"
-                                    "margin:0px;"
+                           "margin:0px;"
                            "}")
         self.setContentsMargins(0, 0, 0, 0)
         self.layout().setContentsMargins(0, 0, 0, 0)
@@ -42,28 +45,44 @@ class CaptureWidget(QFrame):
         sp.setHorizontalStretch(0)
         sp.setVerticalStretch(0)
         self.setSizePolicy(sp)
-        self.tracked_objects=[]
+
+    def initialize_video_label(self):
+        self.video_label = QLabel()
+        w, h = settings.input.capture_resolution
+        self.video_label.resize(w, h)
+        self.set_blank_image()
 
     def update_persondb(self,persondb):
         self.person_db=persondb
 
-    def update_person_detections(self,tracked_objects):
+    def update_person_detections(self,tracked_objects,image):
         self.tracked_objects=tracked_objects
+        self.update_capture(image)
 
     def update_capture(self,image):
         def update_capture_deferred():
             self.draw_person_boxes(self.tracked_objects, image)
-            self.setCVImage(image)
+            self.set_cv_image(image)
         QTimer.singleShot(self.settings.client.display_delay, update_capture_deferred)
 
-
-    def setCVImage(self, image):
-        rgbImage = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        convertToQtFormat = QImage(rgbImage.data, rgbImage.shape[1], rgbImage.shape[0], QImage.Format_RGB888)
+    def set_blank_image(self):
         w, h = self.settings.gui.display_resolution
-        p = convertToQtFormat.scaled(w, h, Qt.KeepAspectRatio)
+        rgb_image=np.zeros((w,h,3))
+        self.set_image(rgb_image)
+    def set_image(self,rgbImage):
+        qimage = QImage(rgbImage.data, rgbImage.shape[1], rgbImage.shape[0], QImage.Format_RGB888)
+        self.set_qimage(qimage)
+
+    def set_qimage(self,qimage):
+        w, h = self.settings.gui.display_resolution
+        p = qimage.scaled(w, h, Qt.KeepAspectRatio)
         p = QPixmap.fromImage(p)
         self.video_label.setPixmap(p)
+
+    def set_cv_image(self, image):
+        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        self.set_image(rgb_image)
+
 
 
     def draw_person_boxes(self, tracked_objects, image):

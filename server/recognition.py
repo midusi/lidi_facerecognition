@@ -1,71 +1,13 @@
 import cv2
-import time
 from backend.tracking import IOUTracker
 import os
-import logging,socket, threading
-import pickle
-from datetime import datetime
+import multiprocessing
+import cv2
+import logging
+import time
 import utils
 import threading
-import multiprocessing
 import queue
-import numpy as np
-
-from backend import framediff
-
-class CaptureWorker:
-
-    def __init__(self,settings):
-
-        self.stop = False
-
-        self.image_queue=multiprocessing.Queue()
-        self.image_queue_lock=multiprocessing.Lock()
-        self.settings=settings
-
-    def run(self):
-        # improve memory managment and grabbing
-        # https://www.chiefdelphi.com/forums/archive/index.php/t-123390.html
-        # https://stackoverflow.com/questions/30032063/opencv-videocapture-lag-due-to-the-capture-buffer
-        logging.info("Starting capture worker..")
-        cap = cv2.VideoCapture(self.settings.input.stream_url)
-        w, h = self.settings.input.capture_resolution
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
-        cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
-        cap.set(cv2.CAP_PROP_EXPOSURE, 0)
-        cap.set(cv2.CAP_PROP_FPS, 30)
-        cap.set(cv2.CAP_PROP_BUFFERSIZE, 10)
-
-        fw, fh = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        frame_ready=False
-        while not frame_ready:
-            frame_ready,image=cap.read()
-        last_image=image.copy()
-        profiler=utils.Profiler()
-        logging.info(f"Capturing at {fw}x{fh}@{fps}, skip={self.settings.capture.frame_skip}")
-        while not self.stop:
-
-            cap.grab()
-            for i in range(self.settings.capture.frame_skip):
-                pass
-            profiler.event("read")
-            frame_ready = cap.retrieve(image=image)
-            profiler.event("finished reading")
-
-            if frame_ready:
-                # logging.info(f"L1 distance between images: {distance}")
-                if framediff.image_changed(last_image,image,self.settings.capture.different_images_threshold):
-                    if self.image_queue.qsize()<self.settings.capture.max_elements_in_queue:
-                        self.image_queue.put(image)
-                last_image = image.copy()
-            else:
-                if not self.stop:
-                    logging.info("stopped capturing")
-                self.stop = True
-            profiler.reset()
-        logging.info("Stopped capture worker")
 
 
 class RecognitionWorker:
@@ -133,7 +75,7 @@ class RecognitionWorker:
         self.tracker.update(self.person_detections)
         self.tracked_objects = self.tracker.get_tracked_objects()
         profiler.event("queue")
-        self.tracked_objects_queue.put(self.tracked_objects)
+        self.tracked_objects_queue.put((self.tracked_objects,image))
 
         # logging.info(f"{len(self.tracked_objects)} objects")
         if self.settings.learning.save_unrecognized_peoples_faces:
@@ -200,51 +142,3 @@ class RecognitionWorker:
                         full_image_filepath = os.path.join(save_folderpath, f"{filename}_full_{[top,left,w,h]}.png")
                         cv2.imwrite(full_image_filepath , image)
 
-
-
-class ServerWorker:
-
-    def __init__(self,settings,recognition_worker):
-        self.stop=False
-        self.settings=settings
-        logging.getLogger().setLevel(logging.DEBUG)
-        self.recognition_worker=recognition_worker
-
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind((settings.bind_ip, settings.bind_port))
-        self.server.listen(5)  # max backlog of connections
-
-        logging.info('Listening on {}:{}'.format(settings.bind_ip, settings.bind_port))
-
-    def handle_client_connection(self,client_socket,address):
-        address_str=f"{address[0]}:{address[1]}"
-        logging.info(f'Thread spawned to handle connections from to {address_str}')
-
-        try:
-            while not self.stop:
-                time.sleep(1)
-                objects=self.recognition_worker.tracked_objects
-                pickled_objects=pickle.dumps(objects)
-                client_socket.send(pickled_objects)
-                logging.debug('Sent ' + str(objects) + "to " + str())
-            client_socket.close()
-        except socket.timeout:
-            logging.debug('Connection to {address_str} timed out.')
-
-
-    def run(self):
-        logging.info("Starting server worker..")
-
-        while True:
-            client_sock, address = self.server.accept()
-
-            logging.info('Accepted connection from {}:{}'.format(address[0], address[1]))
-            print('Accepted connection from {}:{}'.format(address[0], address[1]))
-            client_handler = threading.Thread(
-                target=self.handle_client_connection,
-                args=(client_sock,address)
-                # without comma you'd get a... TypeError: handle_client_connection() argument after * must be a sequence, not _socketobject
-            )
-            client_handler.setDaemon(True)
-
-            client_handler.start()

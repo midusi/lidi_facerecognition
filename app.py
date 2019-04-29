@@ -91,16 +91,12 @@ class App(QFrame):
         self.greeting_worker.moveToThread(self.greeting_thread)
 
         # CAPTURE
-        self.capture_worker = CaptureWorker(self.face_recognizer, settings, self.person_db)
-
-        self.capture_thread=QThread()
-        self.capture_worker.moveToThread(self.capture_thread)
-        self.capture_thread.started.connect(self.capture_worker.run)
-        self.capture_worker.update_capture.connect(self.capture_widget.update_capture)
-
-
-
-
+        # self.capture_worker = CaptureWorker(self.face_recognizer, settings, self.person_db)
+        #
+        # self.capture_thread=QThread()
+        # self.capture_worker.moveToThread(self.capture_thread)
+        # self.capture_thread.started.connect(self.capture_worker.run)
+        # self.capture_worker.update_capture.connect(self.capture_widget.update_capture)
 
         self.recognition_thread= QThread()
         self.recognition_worker  = RecognitionWorker(self.face_recognizer, settings, self.person_db)
@@ -115,7 +111,7 @@ class App(QFrame):
         recognition_worker.persons_detected_signal.connect(self.greeting_worker.update_objects_tracked)
 
         #START
-        self.capture_thread.start()
+        # self.capture_thread.start()
         self.retrain_thread.start()
         self.greeting_thread.start()
         self.recognition_thread.start()
