@@ -8,7 +8,7 @@ import time
 import utils
 import threading
 import queue
-
+import setproctitle
 
 class RecognitionWorker:
 
@@ -18,6 +18,7 @@ class RecognitionWorker:
         self.capture_worker=capture_worker
         self.stop = False
         self.tracked_objects_queue = multiprocessing.Queue()
+        logging.getLogger().setLevel(logging.INFO)
         # self.last_frame=0
         self.settings=settings
         self.face_recognizer = face_recognizer
@@ -36,6 +37,9 @@ class RecognitionWorker:
             cv2.imwrite(filepath, face_image)
 
     def run(self):
+        process_title=f"[recognition] {setproctitle.getproctitle()}"
+        setproctitle.setproctitle(process_title)
+
         logging.info("Started recognition worker")
         while self.capture_worker.image_queue.empty():
             time.sleep(0.1)
@@ -45,20 +49,10 @@ class RecognitionWorker:
         self.image_saving_thread.start()
 
         while not self.stop:
-
-            # image=self.capture_worker.image.copy()
-            # self.capture_worker.image_queue_lock.acquire()
-
-            # logging.debug(f"queue size: {self.capture_worker.image_queue.qsize()}")
-            while not self.capture_worker.image_queue.empty():
-                image = self.capture_worker.image_queue.get()
+            #logging.info(f"queue size: {self.capture_worker.image_processing_queue.qsize()}")
+            # get image from capture worker
+            image = self.capture_worker.image_processing_queue.get()
             self.process_image(image)
-            # if not self.capture_worker.image_queue.empty():
-            #     image=self.capture_worker.image_queue.get()
-            #     self.process_image(image)
-            # self.capture_worker.image_queue_lock.release()
-            # self.recognitions_queue.put(self.tracked_objects)
-
 
         logging.info("Stopped recognition worker")
 
@@ -67,15 +61,15 @@ class RecognitionWorker:
         profiler.event("facerec")
         self.person_detections = self.face_recognizer.recognize(image)
         # logging.debug(f"{len(self.person_detections)} detections")
-        if self.person_detections:
-            bbox = self.person_detections[0].bbox
+        # if self.person_detections:
+        #     bbox = self.person_detections[0].bbox
             # logging.info(f"Person detected at {bbox}")
         profiler.event("tracking")
 
         self.tracker.update(self.person_detections)
         self.tracked_objects = self.tracker.get_tracked_objects()
         profiler.event("queue")
-        self.tracked_objects_queue.put((self.tracked_objects,image))
+        self.tracked_objects_queue.put(self.tracked_objects)
 
         # logging.info(f"{len(self.tracked_objects)} objects")
         if self.settings.learning.save_unrecognized_peoples_faces:

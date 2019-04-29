@@ -6,6 +6,7 @@ import logging,socket
 import pickle
 
 import threading
+import setproctitle
 
 def setup_thread(function, name):
     thread = threading.Thread(target=function,name=name)
@@ -16,35 +17,54 @@ def setup_thread(function, name):
 
 class ServerWorker:
 
-    def __init__(self,settings,recognition_worker):
+    def __init__(self,settings,recognition_worker,capture_worker):
         self.stop=False
         self.settings=settings
         logging.getLogger().setLevel(logging.INFO)
         self.recognition_worker=recognition_worker
-
+        self.capture_worker=capture_worker
         self.http_server = HTTPServer(('', 8000), RecognitionRequestHandler)
         self.http_server.server_worker = self
-        self.http_server_thread = setup_thread(self.http_server.serve_forever, "HTTPServer Thread")
 
 
+    def update_image(self):
+
+        while not self.stop:
+            self.image = self.capture_worker.image_queue.get()
+
+    def update_tracked_objects(self):
+        while not self.stop:
+
+            self.tracked_objects = self.recognition_worker.tracked_objects_queue.get()
 
     def run(self):
-        logging.info("Starting server worker..")
-        # initialize the tracked_objects and image variables
-        self.tracked_objects, self.image = self.recognition_worker.tracked_objects_queue.get()
 
-        #  start the http_server_thread from here so that it shares memory with this process and can read
-        # the self.tracked_objects and self.image variables
+        process_title = f"[webserver] {setproctitle.getproctitle()}"
+        setproctitle.setproctitle(process_title)
+
+        logging.info("Started server worker")
+
+        # initialize tracked objects and image
+        self.image = self.capture_worker.image_queue.get()
+
+        logging.info("[Server] getting object")
+        self.tracked_objects= self.recognition_worker.tracked_objects_queue.get()
+
+        logging.info("[Server] Image and tracked object initialized")
+        self.http_server_thread = setup_thread(self.http_server.serve_forever, "HTTPServer Thread")
+        self.image_queue_thread=  setup_thread(self.update_image, "Image Thread")
+        self.tracked_objects_queue_thread = setup_thread(self.update_tracked_objects, "Tracked Objects")
+
+        # start threads from here so that they share memory with this process and can read the self.tracked_objects and self.image variables
         self.http_server_thread.start()
-
-        # continuously run and get & update the latest image and tracked objects
-        while True:
-            self.tracked_objects, self.image = self.recognition_worker.tracked_objects_queue.get()
-
-
-
-
-
+        self.image_queue_thread.start()
+        self.tracked_objects_queue_thread.start()
+        logging.info("[Server] All threads started")
+        #wait for threads to finish
+        self.image_queue_thread.join()
+        self.tracked_objects_queue_thread.join()
+        self.http_server_thread.join()
+        logging.info("[Server] All threads finished")
 
 
 # class ServerWorker:

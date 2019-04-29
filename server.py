@@ -12,7 +12,7 @@ import multiprocessing
 import time, threading,sys
 import atexit
 import logging
-
+import setproctitle
 
 def setup_thread(function, name):
     thread = threading.Thread(target=function,name=name)
@@ -45,7 +45,6 @@ if __name__ == '__main__':
 
         logging.info("finished cleaning up.")
 
-
     #logging.getLogger().setLevel(logging.INFO)
 
     manager = multiprocessing.Manager()
@@ -62,8 +61,11 @@ if __name__ == '__main__':
     recognition_worker  = RecognitionWorker(face_recognizer,settings,persondb,capture_worker)
     recognition_process = setup_process(recognition_worker.run, "Recognition Thread")
 
-    server=ServerWorker(settings,recognition_worker)
-    server_thread = setup_process(server.run,"Server Thread")
+    server=ServerWorker(settings,recognition_worker,capture_worker)
+    server_process= setup_process(server.run,"Server Thread")
+
+    process_title = f"[main] {setproctitle.getproctitle()}"
+    setproctitle.setproctitle(process_title)
 
     atexit.register(cleanup)
 

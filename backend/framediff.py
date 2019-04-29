@@ -2,13 +2,17 @@ from skimage.morphology import erosion,square
 from skimage.filters import gaussian
 import numpy as np
 
+def absdiff(img1,img2):
+    a = img1 - img2
+    b = np.uint8(img1 < img2) * 254 + 1
+    return a * b
 
 def distance_naive(last,current):
     if len(last.shape)==3:
         last = last.mean(axis=2)
         current = current.mean(axis=2)
-    diff = last - current
-    distance = np.mean(np.abs(diff))
+
+    distance = np.mean(absdiff(last,current))
     return distance
 
 
@@ -35,7 +39,7 @@ def distance_gaussian(last,current,sigma):
     current_blurred=gaussian(current,sigma)
     diff = last_blurred - current_blurred
     #show_comparison(last-current,diff,f"sigma {sigma}")
-    distance = np.mean(np.abs(diff))
+    distance = np.mean(absdiff(last_blurred,current_blurred))
     return distance
 
 def distance_gaussian(last,current,sigma):
@@ -47,7 +51,7 @@ def distance_gaussian(last,current,sigma):
     current_blurred=gaussian(current,sigma)
     diff = last_blurred - current_blurred
     #show_comparison(last-current,diff,f"sigma {sigma}")
-    distance = np.mean(np.abs(diff))
+    distance = np.mean(absdiff(last_blurred,current_blurred))
     return distance
 
 def distance_erosion(last,current,selem_size=None):
