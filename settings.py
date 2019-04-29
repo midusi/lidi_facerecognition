@@ -86,7 +86,7 @@ tracking = TrackingSettings()
 
 
 class Client:
-    throttle_requests = 1 / 30
+    throttle_rgequests = 1 / 30
     display_delay = 0
 
 client=Client()
@@ -95,6 +95,6 @@ client=Client()
 class Capture:
     frame_skip=2
     max_elements_in_queue=2
-    different_images_threshold=30
+    different_images_threshold=0.3
 
 capture=Capture()

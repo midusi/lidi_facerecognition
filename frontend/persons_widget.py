@@ -147,6 +147,7 @@ class PersonWidget(QFrame):
 
     def generate_status_icon(self, status):
         # for animations https://stackoverflow.com/questions/10261265/showing-a-gif-animation-in-qlabel
+        
         if status==TrackingStatus.Recognized:
             recognition_icon = "img/recognized.png"
         elif status==TrackingStatus.Warmup:

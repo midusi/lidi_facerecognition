@@ -70,4 +70,4 @@ def distance_erosion(last,current,selem_size=None):
     return distance
 
 def image_changed( last, current, threshold):
-    return distance_erosion(last, current)>threshold
+    return distance_gaussian(last, current,0.01)>threshold

@@ -13,9 +13,8 @@ import backend.train_classifier as tc
 
 
 if __name__ == '__main__':
-    data = np.load(settings.training_data_file)
-    x_train, y_train = data["x_train"], data["y_train"]
-    x_train, y_train = data["x_train"], data["y_train"]
+    persondb, x_train, y_train = facedb.update(settings)
+    y_pred, model = tc.update(settings, persondb, x_train, y_train)
 
     persondb = facedb.load_persondb(settings.face_database_path)
     y_pred,model=tc.update(settings,persondb,x_train, y_train)
