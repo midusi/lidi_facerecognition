@@ -7,7 +7,7 @@ import pickle
 
 import threading
 import setproctitle
-
+from .worker import Worker
 def setup_thread(function, name):
     thread = threading.Thread(target=function,name=name)
     thread.setDaemon(True)
@@ -15,10 +15,10 @@ def setup_thread(function, name):
 
 
 
-class ServerWorker:
+class WebserverWorker(Worker):
 
     def __init__(self,settings,recognition_worker,capture_worker):
-        self.stop=False
+        super().__init__("webserver")
         self.settings=settings
         logging.getLogger().setLevel(logging.INFO)
         self.recognition_worker=recognition_worker
@@ -29,42 +29,40 @@ class ServerWorker:
 
     def update_image(self):
 
-        while not self.stop:
+        while not self.stopped:
             self.image = self.capture_worker.image_queue.get()
 
     def update_tracked_objects(self):
-        while not self.stop:
-
+        while not self.stopped:
             self.tracked_objects = self.recognition_worker.tracked_objects_queue.get()
 
-    def run(self):
 
-        process_title = f"[webserver] {setproctitle.getproctitle()}"
-        setproctitle.setproctitle(process_title)
+    def stop(self):
+        super().stop()
 
-        logging.info("Started server worker")
+    def work(self):
 
         # initialize tracked objects and image
         self.image = self.capture_worker.image_queue.get()
-
-        logging.info("[Server] getting object")
         self.tracked_objects= self.recognition_worker.tracked_objects_queue.get()
+        logging.info(self.tag("Image and tracked object initialized"))
 
-        logging.info("[Server] Image and tracked object initialized")
+        # start threads from here so that they share memory with this process and can read the self.tracked_objects and self.image variables
         self.http_server_thread = setup_thread(self.http_server.serve_forever, "HTTPServer Thread")
         self.image_queue_thread=  setup_thread(self.update_image, "Image Thread")
         self.tracked_objects_queue_thread = setup_thread(self.update_tracked_objects, "Tracked Objects")
-
-        # start threads from here so that they share memory with this process and can read the self.tracked_objects and self.image variables
         self.http_server_thread.start()
         self.image_queue_thread.start()
         self.tracked_objects_queue_thread.start()
-        logging.info("[Server] All threads started")
+        logging.info(self.tag("All threads started"))
+
         #wait for threads to finish
         self.image_queue_thread.join()
+        logging.info(self.tag("image queue finished "))
         self.tracked_objects_queue_thread.join()
+        logging.info(self.tag("object queue finished "))
         self.http_server_thread.join()
-        logging.info("[Server] All threads finished")
+        logging.info(self.tag("All threads finished"))
 
 
 # class ServerWorker:

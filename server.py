@@ -1,7 +1,7 @@
 
 from server.capture import CaptureWorker
 from server.recognition import RecognitionWorker
-from server.serve import ServerWorker
+from server.webserver import WebserverWorker
 
 from backend import facedb
 from backend.face_recognizer import FaceEmbeddingClassifier, FaceRecognizer
@@ -30,46 +30,51 @@ def setup_process(function, name):
 
 
 if __name__ == '__main__':
-    import os
-    print(os.getcwd(),"\n",__file__)
+
 
     def cleanup():
-        logging.info("cleaning up...")
+        logging.info("[main] Shutting down...")
+        # Stop processes. The stopping order is important since some processes depend on others
+        webserver_worker.stop()
+        recognition_worker.stop()
+        capture_worker.stop()
+
+        logging.info("[main] terminating processes just in case...")
         server_process.terminate()
         recognition_process.terminate()
         capture_process.terminate()
 
-        capture_worker.stop=True
-        recognition_worker.stop = True
-        server.stop=True
-
-        logging.info("finished cleaning up.")
+        logging.info("[main] finished cleaning up.")
 
     #logging.getLogger().setLevel(logging.INFO)
 
-    manager = multiprocessing.Manager()
-    shared_list = manager.list()
-
-    persondb = facedb.load_persondb(settings.face_database_path)
-
-    face_classifier = FaceEmbeddingClassifier(settings)
-    face_recognizer = FaceRecognizer(settings, face_classifier)
-
-    capture_worker = CaptureWorker(settings)
-    capture_process=setup_process(capture_worker.run, "Capture Thread")
-
-    recognition_worker  = RecognitionWorker(face_recognizer,settings,persondb,capture_worker)
-    recognition_process = setup_process(recognition_worker.run, "Recognition Thread")
-
-    server=ServerWorker(settings,recognition_worker,capture_worker)
-    server_process= setup_process(server.run,"Server Thread")
-
+    # set main process title
     process_title = f"[main] {setproctitle.getproctitle()}"
     setproctitle.setproctitle(process_title)
 
+    # load person database, classifier and face recognizer
+    persondb = facedb.load_persondb(settings.face_database_path)
+    face_classifier = FaceEmbeddingClassifier(settings)
+    face_recognizer = FaceRecognizer(settings, face_classifier)
+
+    # register exit function
     atexit.register(cleanup)
 
+    # Generate workers and processes
+    capture_worker = CaptureWorker(settings)
+    capture_process = setup_process(capture_worker.run, "Capture")
+
+    recognition_worker  = RecognitionWorker(face_recognizer,settings,persondb,capture_worker)
+    recognition_process = setup_process(recognition_worker.run, "Recognition")
+
+    webserver_worker = WebserverWorker(settings, recognition_worker, capture_worker)
+    server_process = setup_process(webserver_worker.run, "Webserver")
+
     try:
+        #wait for processes to finish
+        # server_process.join()
+        # recognition_process.join()
+        # capture_process.join()
         while True:
             time.sleep(30)
     except (KeyboardInterrupt, SystemExit):

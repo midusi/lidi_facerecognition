@@ -9,14 +9,13 @@ import utils
 import threading
 import queue
 import setproctitle
-
-class RecognitionWorker:
+from .worker import Worker
+class RecognitionWorker(Worker):
 
     def __init__(self,face_recognizer,settings,persondb,capture_worker):
-        print("init of "+str(self))
+        super().__init__("recognition")
         self.recognitions=0
         self.capture_worker=capture_worker
-        self.stop = False
         self.tracked_objects_queue = multiprocessing.Queue()
         logging.getLogger().setLevel(logging.INFO)
         # self.last_frame=0
@@ -30,31 +29,29 @@ class RecognitionWorker:
 
 
     def save_images_worker(self):
-        while not self.stop:
+        while not self.stopped:
             # image,tracked_objects=self.image_saving_queue.get()
             # self.save_unrecognized_peoples_faces(image, tracked_objects)
             filepath, face_image= self.image_saving_queue.get()
             cv2.imwrite(filepath, face_image)
 
-    def run(self):
-        process_title=f"[recognition] {setproctitle.getproctitle()}"
-        setproctitle.setproctitle(process_title)
-
-        logging.info("Started recognition worker")
-        while self.capture_worker.image_queue.empty():
+    def work(self):
+        while self.capture_worker.image_processing_queue.empty():
             time.sleep(0.1)
         self.image_saving_queue=queue.Queue()
         self.image_saving_thread=threading.Thread(target=self.save_images_worker)
         self.image_saving_thread.setDaemon(True)
         self.image_saving_thread.start()
 
-        while not self.stop:
+        logging.info(self.tag("Image saving thread started"))
+
+        while not self.stopped:
             #logging.info(f"queue size: {self.capture_worker.image_processing_queue.qsize()}")
             # get image from capture worker
             image = self.capture_worker.image_processing_queue.get()
             self.process_image(image)
-
-        logging.info("Stopped recognition worker")
+        self.image_saving_thread.join()
+        logging.info(self.tag("Image saving thread stopped"))
 
     def process_image(self,image):
         profiler=utils.Profiler()
