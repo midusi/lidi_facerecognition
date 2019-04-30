@@ -60,11 +60,11 @@ while(True):
         (top, right, bottom, left) = bbox
         matches=face_recognition.compare_faces(x_train,encoding)
 
-        # person="Desconocido"
+        # widgets="Desconocido"
         # if True in matches:
         #     first_match_index = matches.index(True)
         #     id=y_train[first_match_index]
-        #     person= id_to_person[id]
+        #     widgets= id_to_person[id]
         id=face_classification_model.predict(encoding.reshape(1,-1))
         person=id_to_person[id[0]]
 

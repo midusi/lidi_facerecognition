@@ -52,7 +52,7 @@ if __name__ == '__main__':
     process_title = f"[main] {setproctitle.getproctitle()}"
     setproctitle.setproctitle(process_title)
 
-    # load person database, classifier and face recognizer
+    # load widgets database, classifier and face recognizer
     persondb = facedb.load_persondb(settings.face_database_path)
     face_classifier = FaceEmbeddingClassifier(settings)
     face_recognizer = FaceRecognizer(settings, face_classifier)

@@ -102,7 +102,7 @@ class IOUTracker:
     def __init__(self, settings):
         self.settings=settings
         # each element of tracked_bboxes is a list of the latest
-        # detections of the "same" bbox or person
+        # detections of the "same" bbox or widgets
         self.tracked_objects=[]
         self.clock=Clock()
 

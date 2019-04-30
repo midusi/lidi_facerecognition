@@ -1,7 +1,9 @@
 import sys
 from backend import facedb
+
 from backend.face_recognizer import FaceEmbeddingClassifier, FaceRecognizer
-from PyQt5.QtCore import (QThread, Qt, pyqtSignal,QThreadPool)
+
+from PyQt5.QtCore import (QThread, Qt, pyqtSignal)
 from PyQt5.QtWidgets import QFrame, QApplication, QHBoxLayout, QVBoxLayout
 from frontend.capture_widget import CaptureWidget
 from frontend.topbar_widget import TopBarWidget, BottomBarWidget
@@ -9,9 +11,8 @@ from frontend.retrain_worker import RetrainWorker
 import settings
 import logging
 
-from frontend.capture_worker import CaptureWorker
 from frontend.recognition_worker import RecognitionWorker
-from frontend.persons_widget import TrackedPersonsWidget
+from frontend.widgets.persons import TrackedPersonsWidget,LastSeenWidget
 from frontend.greeting import  GreetingWorker
 
 class App(QFrame):
@@ -36,6 +37,8 @@ class App(QFrame):
         self.capture_widget=CaptureWidget(person_db)
         # # RECOGNITION INFO
         self.persons_widget= TrackedPersonsWidget(person_db,"")
+        self.last_seen_widget = LastSeenWidget(person_db, "Últimas personas")
+        self.persons_widget=self.last_seen_widget
 
         self.recognition_info= QHBoxLayout()
         self.recognition_info.setSpacing(0)
@@ -100,7 +103,6 @@ class App(QFrame):
 
         self.recognition_thread= QThread()
         self.recognition_worker  = RecognitionWorker(self.face_recognizer, settings, self.person_db)
-        #self.capture_worker.update_capture.connect(self.recognition_worker.run)
         self.recognition_worker.moveToThread(self.recognition_thread)
         recognition_worker = self.recognition_worker
         self.recognition_thread.started.connect(self.recognition_worker.runHttp)
