@@ -36,24 +36,29 @@ class App(QFrame):
 
         self.capture_widget=CaptureWidget(person_db)
         # # RECOGNITION INFO
-        self.persons_widget= TrackedPersonsWidget(person_db,"")
+
+
+        self.persons_widget = TrackedPersonsWidget(person_db,"")
         self.last_seen_widget = LastSeenWidget(person_db, "Últimas personas")
-        self.persons_widget=self.last_seen_widget
 
-        self.recognition_info= QHBoxLayout()
-        self.recognition_info.setSpacing(0)
-        self.recognition_info.setContentsMargins(0, 0, 0, 0)
+        self.recognition_layout = QVBoxLayout()
+        self.recognition_layout.addWidget(self.persons_widget)
+        self.recognition_layout.addWidget(self.last_seen_widget)
 
-        self.recognition_info.setAlignment(Qt.AlignTop)
-        self.recognition_info.addWidget(self.capture_widget)
 
-        self.recognition_info.addWidget(self.persons_widget)
+        self.recognition_and_capture_layout= QHBoxLayout()
+        self.recognition_and_capture_layout.setSpacing(0)
+        self.recognition_and_capture_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.recognition_and_capture_layout.setAlignment(Qt.AlignTop)
+        self.recognition_and_capture_layout.addWidget(self.capture_widget)
+        self.recognition_and_capture_layout.addLayout(self.recognition_layout)
 
         # CONTAINER
         self.container = QVBoxLayout()
         self.container.addWidget(self.topbar)
         # self.container.addStretch()
-        self.container.addLayout(self.recognition_info)
+        self.container.addLayout(self.recognition_and_capture_layout)
         self.container.addStretch()
 
         self.bottom_bar=BottomBarWidget()
@@ -108,7 +113,10 @@ class App(QFrame):
         self.recognition_thread.started.connect(self.recognition_worker.runHttp)
 
         recognition_worker.server_status_signal.connect(self.bottom_bar.update_server_status)
+
         recognition_worker.persons_detected_signal.connect(self.persons_widget.update_persons)
+        recognition_worker.persons_detected_signal.connect(self.last_seen_widget.update_persons)
+
         recognition_worker.persons_detected_signal.connect(self.capture_widget.update_person_detections)
         recognition_worker.persons_detected_signal.connect(self.greeting_worker.update_objects_tracked)
 
@@ -124,6 +132,7 @@ class App(QFrame):
         model, persondb=data
         self.face_recognizer.update_face_classification_model(model)
         self.persons_widget.update_persondb(persondb)
+        self.last_seen_widget.update_persondb(persondb)
         self.capture_widget.update_persondb(persondb)
         self.greeting_worker.update_person_db(persondb)
 

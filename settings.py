@@ -23,14 +23,11 @@ class Input:
 input=Input()
 
 class GUI:
-
     application_resolution=(800,600)
-
-
     #resolution of the display
     display_resolution=input.capture_resolution
-
     application_name="Bienvenido al III-LIDI"
+
 gui=GUI()
 
 
@@ -94,7 +91,7 @@ client=Client()
 
 class Capture:
     frame_skip=2
-    max_elements_in_queue=3
+    max_elements_in_queue=20
     motion_detection_treshold=0.1
 
 capture=Capture()

@@ -71,13 +71,15 @@ class PersonWidget(QFrame):
 
     def generate_name_widget(self, name, description):
         container = QFrame()
-        container.setStyleSheet("QFrame {margin-left:0px;color:black;}")
+        container.setStyleSheet("QFrame {margin-left:0px;"
+                                "color:black;}")
 
         name_layout = QVBoxLayout()
         container.setLayout(name_layout)
 
         person_label = QLabel()
-        person_label.setStyleSheet("QLabel {font-size:28px;}")
+        person_label.setStyleSheet("QLabel {"
+                                   "font-size:28px;}")
         person_label.setText(name)
         name_layout.addWidget(person_label, 0, Qt.AlignLeft)
 
@@ -85,77 +87,6 @@ class PersonWidget(QFrame):
         jobs_label.setText(description)
         name_layout.addWidget(jobs_label, 0, Qt.AlignLeft)
         return container
-
-    def pil2pixmap(self, im):
-        if im.mode == "RGB":
-            pass
-        elif im.mode == "L":
-            im = im.convert("RGBA")
-        data = im.convert("RGBA").tobytes("raw", "RGBA")
-        qim = QtGui.QImage(data, im.size[0], im.size[1], QtGui.QImage.Format_RGBA8888)
-        pixmap = QtGui.QPixmap.fromImage(qim)
-        return pixmap
-
-
-
-
-
-class SimplePersonWidget(QFrame):
-
-    def __init__(self, name, avatar, parent=None):
-        super().__init__(parent=parent)
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-        self.set_style()
-
-        self.profile_pixmap = self.pil2pixmap(avatar)
-
-        self.profile_photo = AvatarLabel(self.profile_pixmap)
-        self.profile_photo.setStyleSheet("AvatarLabel{ border-bottom:none;"
-                                         "margin:0px;"
-                                         "padding:0px;"
-                                         "width:96px;"
-                                         "}")
-
-        layout.addWidget(self.profile_photo)
-        self.name_widget = self.generate_name_widget(name)
-        layout.addWidget(self.name_widget)
-
-
-    def set_style(self):
-        sp = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        #sp.setHorizontalStretch(10)
-        #sp.setVerticalStretch(10)
-        self.setSizePolicy(sp)
-
-        self.setStyleSheet("SimplePersonWidget {margin:0px; padding:10px; "
-                           # "border-radius:3px;"
-                           "border: 1px solid black; "
-                           "border-bottom: 2px solid black; "
-                           "background-color:white;"
-                           "color: black;"
-                           "max-width:96px;"
-                           "}")
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setOffset(0)
-        shadow.setBlurRadius(13)
-        shadow.setColor(QtGui.QColor(128, 128, 128))
-
-        self.setGraphicsEffect(shadow)
-
-    def generate_name_widget(self, name):
-        person_label = QLabel()
-        person_label.setStyleSheet("QLabel {font-size:10px;color:black;}")
-        person_label.setText(name)
-        return person_label
-
-        # container = QFrame()
-        # container.setStyleSheet("QFrame {margin-left:0px;color:black;}")
-        #
-        # name_layout = QVBoxLayout()
-        # container.setLayout(name_layout)
-        #name_layout.addWidget(person_label, 0, Qt.AlignCenter)
-        #return container
 
     def pil2pixmap(self, im):
         if im.mode == "RGB":

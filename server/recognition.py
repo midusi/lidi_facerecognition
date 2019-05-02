@@ -42,8 +42,8 @@ class RecognitionWorker(Worker):
 
     def stop(self):
         super().stop()
-        self.save_faces_thread.stop = True
-        self.update_image_thread.stop = True
+        #self.save_faces_thread.stop = True
+        #self.update_image_thread.stop = True
 
     def work(self):
 

@@ -7,7 +7,8 @@ import cv2
 from PIL import Image
 from backend.tracking import TrackingStatus
 
-from .person import PersonWidget,SimplePersonWidget
+from .person import PersonWidget
+from .simple_person import SimplePersonWidget
 
 
 class PersonsWidget(QFrame):
@@ -24,9 +25,9 @@ class PersonsWidget(QFrame):
 
         self.setStyleSheet("PersonsWidget {width:100%;"
                            # "margin-top:30px;"
-                           "background-color:#333333;"
+                           #"background-color:#333333;"
                             "background-color:#332222;"
-                           "padding:0px;"
+                           "padding:5px;"
                            "}")
 
         self.main_layout.setAlignment(Qt.AlignTop)
@@ -37,7 +38,7 @@ class PersonsWidget(QFrame):
         sp.setHorizontalStretch(1)
         sp.setVerticalStretch(1)
         self.setSizePolicy(sp)
-        self.main_layout.addChildLayout(self.persons_detected_layout)
+        self.main_layout.addLayout(self.persons_detected_layout)
         self.setLayout(self.main_layout)
 
     def generate_persons_detected_layout(self,orientation):
@@ -46,15 +47,14 @@ class PersonsWidget(QFrame):
         else:
             persons_detected_layout = QHBoxLayout()
 
-        persons_detected_layout.setAlignment(Qt.AlignTop)
+        #persons_detected_layout.setAlignment(Qt.AlignTop)
         persons_detected_layout.setSpacing(0)
-        #persons_detected_layout.setContentsMargins(10, 10, 10, 10)
+        persons_detected_layout.setContentsMargins(10, 10, 10, 10)
 
         return persons_detected_layout
 
     def generate_main_layout(self):
         main_layout = QVBoxLayout()
-
         return main_layout
 
     def generate_title(self,title):
@@ -76,10 +76,9 @@ class PersonsWidget(QFrame):
 
 class LastSeenWidget(PersonsWidget):
     def __init__(self, person_db, title, last_seen_limit=5, parent=None):
-        super().__init__(person_db,title,parent=parent)
+        super().__init__(person_db,title,parent=parent,orientation="horizontal")
         self.last_seen=[]
         self.last_seen_ids=[]
-
         self.last_seen_limit=last_seen_limit
 
     def check_new_persons(self,tracked_objects):
@@ -97,7 +96,7 @@ class LastSeenWidget(PersonsWidget):
                 index=self.last_seen_ids.index(id)
                 self.last_seen.pop(index)
                 self.last_seen_ids.pop(index)
-            except:
+            except ValueError:
                 pass
 
             self.last_seen.append(person)
@@ -119,12 +118,9 @@ class LastSeenWidget(PersonsWidget):
             self.remove_all_widgets(self.persons_detected_layout)
 
             for person in self.last_seen:
-                status = TrackingStatus.Recognized
-                name = person.full_name()
-                description = person.description()
-                image = person.avatar
-                person_widget=SimplePersonWidget(name,image)
+                person_widget = SimplePersonWidget(person.full_name(),person.avatar)
                 self.persons_detected_layout.addWidget(person_widget)
+
 
 
 class TrackedPersonsWidget(PersonsWidget):

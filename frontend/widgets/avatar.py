@@ -11,6 +11,7 @@ class AvatarLabel(QLabel):
         self.radius = size//2
 
         self.target = QPixmap(self.size())
+
         self.target.fill(Qt.transparent)
 
         p = p.scaled(
@@ -29,3 +30,4 @@ class AvatarLabel(QLabel):
         painter.setClipPath(path)
         painter.drawPixmap(0, 0, p)
         self.setPixmap(self.target)
+        self.setAlignment(Qt.AlignHCenter)
