@@ -28,29 +28,44 @@ class RecognitionWorker(Worker):
         self.tracker = IOUTracker(settings)
 
 
-    def save_images_worker(self):
+    def save_faces_worker(self):
         while not self.stopped:
             # image,tracked_objects=self.image_saving_queue.get()
             # self.save_unrecognized_peoples_faces(image, tracked_objects)
-            filepath, face_image= self.image_saving_queue.get()
+            filepath, face_image= self.save_faces_queue.get()
             cv2.imwrite(filepath, face_image)
+    def update_image_worker(self):
+        while not self.stopped:
+            # image,tracked_objects=self.image_saving_queue.get()
+            # self.save_unrecognized_peoples_faces(image, tracked_objects)
+            self.image = self.capture_worker.image_processing_queue.get()
+
+    def stop(self):
+        super().stop()
+        self.save_faces_thread.stop = True
+        self.update_image_thread.stop = True
 
     def work(self):
-        while self.capture_worker.image_processing_queue.empty():
-            time.sleep(0.1)
-        self.image_saving_queue=queue.Queue()
-        self.image_saving_thread=threading.Thread(target=self.save_images_worker)
-        self.image_saving_thread.setDaemon(True)
-        self.image_saving_thread.start()
+
+        self.image=None
+        self.save_faces_queue=queue.Queue()
+        self.save_faces_thread=self.setup_thread("save_face_thread", self.save_faces_worker)
+        self.update_image_thread = self.setup_thread("update_image_thread", self.update_image_worker)
+
+        #wait until the first image is received
+        while self.image is None:
+            time.sleep(0.5)
 
         logging.info(self.tag("Image saving thread started"))
 
         while not self.stopped:
             #logging.info(f"queue size: {self.capture_worker.image_processing_queue.qsize()}")
             # get image from capture worker
-            image = self.capture_worker.image_processing_queue.get()
+            image = self.image
             self.process_image(image)
-        self.image_saving_thread.join()
+
+        self.save_faces_thread.join()
+        self.update_image_thread.join()
         logging.info(self.tag("Image saving thread stopped"))
 
     def process_image(self,image):
@@ -126,7 +141,7 @@ class RecognitionWorker(Worker):
 
                     face_image=face_image.copy()
                     #self.image_saving_queue.put((image, self.tracked_objects))
-                    self.image_saving_queue.put((filepath,face_image))
+                    self.save_faces_queue.put((filepath, face_image))
                     #save image
                     #cv2.imwrite(filepath, face_image)
                     if self.settings.learning.save_full_images:

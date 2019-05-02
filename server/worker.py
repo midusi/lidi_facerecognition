@@ -1,7 +1,8 @@
 import logging
 import setproctitle
 from abc import abstractmethod
-import signal
+import threading
+
 class Worker:
 
     def __init__(self,name):
@@ -9,6 +10,11 @@ class Worker:
         self.name=name
         logging.getLogger().setLevel(logging.INFO)
 
+    def setup_thread(self,name,target):
+        thread = threading.Thread(target=target,name=name)
+        thread.setDaemon(True)
+        thread.start()
+        return thread
 
     def run(self):
         # ignore keyboard interrupts
@@ -25,6 +31,7 @@ class Worker:
         except Exception as e:
             logging.info(self.tag(f"Unknown exception {str(e)}..."))
             self.stop()
+            raise e
         finally:
             logging.info(self.tag("stopped"))
 
