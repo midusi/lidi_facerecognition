@@ -86,7 +86,7 @@ class RecognitionWorker(Worker):
         recognized_subfolder = "recognized"
         recognized_folderpath = os.path.join(folderpath, recognized_subfolder)
         if not os.path.exists(folderpath):
-            logging.info(f"Creating folder {folderpath}...")
+            logging.info(self.tag(f"Creating folder {folderpath}..."))
             os.mkdir(folderpath)
             os.mkdir(recognized_folderpath)
         file_format = '%Y-%m-%d_%H:%M:%S:{}'.format(time_microseconds)
