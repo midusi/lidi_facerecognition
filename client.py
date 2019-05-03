@@ -12,8 +12,40 @@ import settings
 import logging
 
 from frontend.recognition_worker import RecognitionWorker
-from frontend.widgets.persons import TrackedPersonsWidget,LastSeenWidget
+from frontend.widgets.persons import TrackedPersonsWidget
+from frontend.widgets.last_seen import LastSeenWidget
 from frontend.greeting import  GreetingWorker
+
+
+class RecognitionAndCaptureWidget(QFrame):
+    def __init__(self,person_db):
+        super().__init__()
+        self.capture_widget = CaptureWidget(person_db)
+        # # RECOGNITION INFO
+
+        self.persons_widget = TrackedPersonsWidget(person_db, "")
+        self.last_seen_widget = LastSeenWidget(person_db, "Últimas personas")
+
+        self.recognition_layout = QVBoxLayout()
+        self.recognition_layout.addWidget(self.persons_widget)
+        self.recognition_layout.addWidget(self.last_seen_widget)
+        self.recognition_layout.setContentsMargins(5, 5, 5, 5)
+
+        main_layout = QHBoxLayout()
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        main_layout.setAlignment(Qt.AlignTop)
+        main_layout.addWidget(self.capture_widget)
+        main_layout.addLayout(self.recognition_layout)
+
+        self.setLayout(main_layout)
+
+        self.setStyleSheet("RecognitionAndCaptureWidget {"
+                           "background-color:#332222;"
+                           "}")
+
+
 
 class App(QFrame):
 
@@ -34,31 +66,13 @@ class App(QFrame):
         self.topbar=TopBarWidget()
         self.topbar.layout().setAlignment(Qt.AlignTop)
 
-        self.capture_widget=CaptureWidget(person_db)
-        # # RECOGNITION INFO
-
-
-        self.persons_widget = TrackedPersonsWidget(person_db,"")
-        self.last_seen_widget = LastSeenWidget(person_db, "Últimas personas")
-
-        self.recognition_layout = QVBoxLayout()
-        self.recognition_layout.addWidget(self.persons_widget)
-        self.recognition_layout.addWidget(self.last_seen_widget)
-
-
-        self.recognition_and_capture_layout= QHBoxLayout()
-        self.recognition_and_capture_layout.setSpacing(0)
-        self.recognition_and_capture_layout.setContentsMargins(0, 0, 0, 0)
-
-        self.recognition_and_capture_layout.setAlignment(Qt.AlignTop)
-        self.recognition_and_capture_layout.addWidget(self.capture_widget)
-        self.recognition_and_capture_layout.addLayout(self.recognition_layout)
 
         # CONTAINER
         self.container = QVBoxLayout()
         self.container.addWidget(self.topbar)
         # self.container.addStretch()
-        self.container.addLayout(self.recognition_and_capture_layout)
+        self.recognition_and_capture_widget=RecognitionAndCaptureWidget(person_db)
+        self.container.addWidget(self.recognition_and_capture_widget)
         self.container.addStretch()
 
         self.bottom_bar=BottomBarWidget()
@@ -68,8 +82,6 @@ class App(QFrame):
         self.setLayout(self.container)
         self.container.setSpacing(0)
         self.container.setContentsMargins(0, 0, 0, 0)
-
-
 
         self.initialize_threads()
         self.set_window_style()
@@ -86,12 +98,12 @@ class App(QFrame):
 
     def initialize_threads(self):
         #RETRAIN
-        self.retrain_thread = QThread()
-        self.retrain_worker = RetrainWorker(settings)
-        self.retrain_worker.moveToThread(self.retrain_thread)
+        # self.retrain_thread = QThread()
+        # self.retrain_worker = RetrainWorker(settings)
+        # self.retrain_worker.moveToThread(self.retrain_thread)
 
-        self.retrain_signal.connect(self.retrain_worker.run)
-        self.retrain_worker.retrained.connect(self.update_model)
+        # self.retrain_signal.connect(self.retrain_worker.run)
+        # self.retrain_worker.retrained.connect(self.update_model)
 
         # GREETING
         self.greeting_worker = GreetingWorker(self.person_db, settings)
@@ -114,21 +126,19 @@ class App(QFrame):
 
         recognition_worker.server_status_signal.connect(self.bottom_bar.update_server_status)
 
-        recognition_worker.persons_detected_signal.connect(self.persons_widget.update_persons)
-        recognition_worker.persons_detected_signal.connect(self.last_seen_widget.update_persons)
-
-        recognition_worker.persons_detected_signal.connect(self.capture_widget.update_person_detections)
+        recognition_worker.persons_detected_signal.connect(self.recognition_and_capture_widget.persons_widget.update_persons)
+        recognition_worker.persons_detected_signal.connect(self.recognition_and_capture_widget.last_seen_widget.update_persons)
+        recognition_worker.persons_detected_signal.connect(self.recognition_and_capture_widget.capture_widget.update_person_detections)
         recognition_worker.persons_detected_signal.connect(self.greeting_worker.update_objects_tracked)
 
         #START
         # self.capture_thread.start()
-        self.retrain_thread.start()
+        #self.retrain_thread.start()
         self.greeting_thread.start()
         self.recognition_thread.start()
 
 
     def update_model(self,data):
-
         model, persondb=data
         self.face_recognizer.update_face_classification_model(model)
         self.persons_widget.update_persondb(persondb)
@@ -140,7 +150,7 @@ class App(QFrame):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_R:
             # here accept the event and do something
-            self.retrain_signal.emit()
+            #self.retrain_signal.emit()
             event.accept()
         else:
             event.ignore()

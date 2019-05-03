@@ -12,7 +12,7 @@ class SimplePersonWidget(QFrame):
         super().__init__(parent=parent)
         layout = QVBoxLayout()
         self.setLayout(layout)
-
+        self.width = 96
         layout.setSizeConstraint(QVBoxLayout.SetMinimumSize)
         layout.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
         self.avatar_widget = self.generate_avatar_widget(avatar)
@@ -27,7 +27,7 @@ class SimplePersonWidget(QFrame):
         # self.name_layout = QGridLayout()
         # self.name_layout.addWidget(self.name_widget)
         # layout.addLayout(self.name_layout)
-        layout.addWidget(self.name_widget)
+        #layout.addWidget(self.name_widget)
 
         self.set_style()
 
@@ -46,32 +46,28 @@ class SimplePersonWidget(QFrame):
                            "margin:5px;"
                            # "padding:5px; " 
                            # "border: 1px solid black; "
-                           "background-color:white;"
+                           #"background-color:white;"
                            "color: black;"
                            "}")
 
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setOffset(0)
-        shadow.setBlurRadius(20)
-        shadow.setColor(QtGui.QColor(128, 128, 128))
-        self.setGraphicsEffect(shadow)
+        # shadow = QGraphicsDropShadowEffect()
+        # shadow.setOffset(0)
+        # shadow.setBlurRadius(20)
+        # shadow.setColor(QtGui.QColor(128, 128, 128))
+        # self.setGraphicsEffect(shadow)
 
     def generate_avatar_widget(self,avatar):
         self.pixmap = self.pil2pixmap(avatar)
-        size=64
-        avatar_widget = AvatarLabel(self.pixmap,size=size)
+
+        avatar_widget = AvatarLabel(self.pixmap,size=self.width)
 
         avatar_widget.setStyleSheet("AvatarLabel{ border-bottom:none;"
                                          "margin:0px;"
                                          "padding:0px;"
-                                         f"width:{size}px;"
+                                         f"width:{self.width}px;"
                                          "}")
 
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setOffset(0)
-        shadow.setBlurRadius(20)
-        shadow.setColor(QtGui.QColor(128, 128, 128))
-        avatar_widget.setGraphicsEffect(shadow)
+
 
         avatar_widget.setAlignment(Qt.AlignHCenter)
         return avatar_widget
@@ -95,8 +91,9 @@ class SimplePersonWidget(QFrame):
                                    "color:black;"
                                     "margin:0px;"
                                    "margin-top:5px;"
+                                   
                                     "padding:0px; "
-                                   "width:48px;"
+                                   f"max-width:{self.width}px;"
                                    "}")
 
         person_label.setText(name)

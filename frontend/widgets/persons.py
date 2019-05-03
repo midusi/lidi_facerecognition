@@ -8,7 +8,7 @@ from PIL import Image
 from backend.tracking import TrackingStatus
 
 from .person import PersonWidget
-from .simple_person import SimplePersonWidget
+
 
 
 class PersonsWidget(QFrame):
@@ -27,12 +27,12 @@ class PersonsWidget(QFrame):
                            # "margin-top:30px;"
                            #"background-color:#333333;"
                             "background-color:#332222;"
-                           "padding:5px;"
+                           #"padding:5px;"
                            "}")
 
         self.main_layout.setAlignment(Qt.AlignTop)
         self.main_layout.setSpacing(0)
-        self.main_layout.setContentsMargins(10, 10, 10, 10)
+        self.main_layout.setContentsMargins(0,0,0,0)
 
         sp = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sp.setHorizontalStretch(1)
@@ -49,7 +49,7 @@ class PersonsWidget(QFrame):
 
         #persons_detected_layout.setAlignment(Qt.AlignTop)
         persons_detected_layout.setSpacing(0)
-        persons_detected_layout.setContentsMargins(10, 10, 10, 10)
+        persons_detected_layout.setContentsMargins(0,0,0,0)
 
         return persons_detected_layout
 
@@ -73,55 +73,6 @@ class PersonsWidget(QFrame):
             layout.removeWidget(widgetToRemove)
             # remove it from the gui
             widgetToRemove.setParent(None)
-
-class LastSeenWidget(PersonsWidget):
-    def __init__(self, person_db, title, last_seen_limit=5, parent=None):
-        super().__init__(person_db,title,parent=parent,orientation="horizontal")
-        self.last_seen=[]
-        self.last_seen_ids=[]
-        self.last_seen_limit=last_seen_limit
-
-    def check_new_persons(self,tracked_objects):
-        new_persons={}
-        for tracked_object in tracked_objects:
-            if tracked_object.get_status() == TrackingStatus.Recognized:
-                id=tracked_object.class_id()
-                person = self.person_db[id]
-                new_persons[id]=person
-        return new_persons
-
-    def update_last_seen(self,new_persons):
-        for id,person in new_persons.items():
-            try:
-                index=self.last_seen_ids.index(id)
-                self.last_seen.pop(index)
-                self.last_seen_ids.pop(index)
-            except ValueError:
-                pass
-
-            self.last_seen.append(person)
-            self.last_seen_ids.append(id)
-        if len(self.last_seen)>self.last_seen_limit:
-            extra = len(self.last_seen)-self.last_seen_limit
-            self.last_seen = self.last_seen[extra:]
-            self.last_seen_ids = self.last_seen_ids[extra:]
-
-
-
-
-    def update_persons(self, tracked_objects):
-
-        new_persons=self.check_new_persons(tracked_objects)
-        if len(new_persons)>0:
-            self.update_last_seen(new_persons)
-
-            self.remove_all_widgets(self.persons_detected_layout)
-
-            for person in self.last_seen:
-                person_widget = SimplePersonWidget(person.full_name(),person.avatar)
-                self.persons_detected_layout.addWidget(person_widget)
-
-
 
 class TrackedPersonsWidget(PersonsWidget):
     def __init__(self, person_db, title, parent=None):

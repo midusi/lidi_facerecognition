@@ -1,9 +1,10 @@
 from PyQt5.QtGui import (QPixmap, QPainter,QPainterPath)
-from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QLabel,QGraphicsDropShadowEffect
 from PyQt5.QtCore import (Qt)
+from PyQt5 import QtGui
 
 class AvatarLabel(QLabel):
-    def __init__(self, p,size=96,*args, antialiasing=True, **kwargs):
+    def __init__(self, p,size=96,*args, antialiasing=True, use_shadow=True, **kwargs):
         super(AvatarLabel, self).__init__(*args, **kwargs)
         self.Antialiasing = antialiasing
         self.setMaximumSize(size,size)
@@ -31,3 +32,9 @@ class AvatarLabel(QLabel):
         painter.drawPixmap(0, 0, p)
         self.setPixmap(self.target)
         self.setAlignment(Qt.AlignHCenter)
+        if use_shadow:
+            shadow = QGraphicsDropShadowEffect()
+            shadow.setOffset(0)
+            shadow.setBlurRadius(20)
+            shadow.setColor(QtGui.QColor(128, 128, 128))
+            self.setGraphicsEffect(shadow)
