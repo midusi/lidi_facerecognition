@@ -24,7 +24,7 @@ class RecognitionAndCaptureWidget(QFrame):
         # # RECOGNITION INFO
 
         self.persons_widget = TrackedPersonsWidget(person_db, "")
-        self.last_seen_widget = LastSeenWidget(person_db, "Últimas personas")
+        self.last_seen_widget = LastSeenWidget(person_db, "Recientes")
 
         self.recognition_layout = QVBoxLayout()
         self.recognition_layout.addWidget(self.persons_widget)

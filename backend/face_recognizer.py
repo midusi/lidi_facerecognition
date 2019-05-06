@@ -8,11 +8,12 @@ import utils
 import logging
 
 class PersonDetection:
-    def __init__(self,class_id,bbox,class_probabilities,face_image):
+    def __init__(self,class_id,bbox,class_probabilities,face_image,landmarks):
         self.class_id=class_id
         self.bbox=bbox
         self.class_probabilities=class_probabilities
         self.face_image=face_image
+        self.landmarks=landmarks
 
 class FaceEmbeddingClassifier:
     def __init__(self,settings):
@@ -36,10 +37,11 @@ class FaceRecognizer:
         self.face_classifier.update_face_classification_model(model)
 
     def detect_and_embeddings(self,image):
-        face_locations = face_recognition.face_locations(image,
-                                                         number_of_times_to_upsample=self.settings.number_of_times_to_upsample)
+        face_locations = face_recognition.face_locations(image,                                                        number_of_times_to_upsample=self.settings.number_of_times_to_upsample)
+        face_landmarks= face_recognition.face_landmarks(image,face_locations,model="small")
+
         face_encodings = face_recognition.face_encodings(image, face_locations)
-        return face_locations,face_encodings
+        return face_locations,face_encodings,face_landmarks
 
     def recognize(self,image):
         def extend_bboxes(image,bboxes,scale):
@@ -57,25 +59,25 @@ class FaceRecognizer:
         downsampled_image= cv2.resize(image, (0, 0), fx=1 / self.settings.recognition.downsampling,
                                      fy=1 / self.settings.recognition.downsampling)
         profiler.event("detect and calc embeddings")
-        face_locations,face_embeddings=self.detect_and_embeddings(downsampled_image)
+        face_locations,face_embeddings,face_landmarks=self.detect_and_embeddings(downsampled_image)
         profiler.event("adapt bounding boxes")
         face_locations=[np.array(bbox) * self.settings.recognition.downsampling for bbox in face_locations]
         face_locations_extended=extend_bboxes(image,face_locations,
                                               self.settings.recognition.face_image_extension_factor)
         face_images= [image[top:bottom, left:right] for (top, right, bottom, left) in face_locations_extended]
         profiler.event("svm")
-        persons=self.recognize_bboxes(face_locations,face_embeddings,face_images)
+        persons=self.recognize_bboxes(face_locations,face_embeddings,face_landmarks,face_images)
         profiler.event("end")
         logging.debug(profiler.summary())
         return persons
 
 
-    def recognize_bboxes(self,face_locations,face_encodings,face_images):
+    def recognize_bboxes(self,face_locations,face_encodings,face_landmarks,face_images):
         person_detections=[]
-        for bbox, encoding, face_image in zip(face_locations, face_encodings,face_images):
+        for bbox, encoding, landmarks, face_image in zip(face_locations, face_encodings,face_landmarks,face_images):
             id,class_probabilities= self.face_classifier.classify(encoding.reshape(1, -1))
 
-            person_detection = PersonDetection(id,bbox,class_probabilities,face_image)
+            person_detection = PersonDetection(id,bbox,class_probabilities,face_image,landmarks)
             person_detections.append(person_detection)
         return person_detections
 

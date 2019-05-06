@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from PyQt5.QtCore import (Qt,QTimer)
 from PyQt5.QtGui import (QPixmap, QImage)
 from PyQt5.QtWidgets import QFrame, QLabel, QVBoxLayout, QSizePolicy
-from frontend.cv2utils import draw_cut_rectangle
+from frontend.cv2utils import draw_cut_rectangle,overlay_image_alpha
 
 import settings
 import time
@@ -26,7 +26,9 @@ class CaptureWidget(QFrame):
         self.settings=settings
         self.persondb=persondb
 
-
+        self.face_background_color = (7, 15, 15)
+        self.face_border_color=(9, 80, 30)
+        self.face_corner_color=(12, 70, 30)
         self.initialize_video_label()
 
         self.initialize_layout()
@@ -83,41 +85,105 @@ class CaptureWidget(QFrame):
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         self.set_image(rgb_image)
 
-
-
     def draw_person_boxes(self, tracked_objects, image):
 
         for tracked_object in tracked_objects:
             person=self.persondb[tracked_object.class_id()]
             if tracked_object.tracking_converged():
-                color=(255,255,255)
-                self.draw_person_label(image, tracked_object, person, color)
+                #color=(255,255,255)
+                color = (12, 106, 106)
+                #self.draw_person_label(image, tracked_object, person, color)
             else:
-                color=(200,200,200)
+                color = (142, 11, 55)
             self.draw_box(tracked_object,image,color)
 
+            #self.draw_landmarks(tracked_object,image,color)
+        self.draw_detections(tracked_objects,image)
 
+
+
+    def draw_detections(self,tracked_objects,image):
+        index=0
+        height=50
+        width=200
+        padding = 20
+        y=image.shape[0]-height-padding
+
+        x=padding
+        for tracked_object in tracked_objects:
+            self.draw_detection(tracked_object, image,x,y,width,height)
+            x+=width+padding
+            index+=1
+
+    def draw_detection(self,tracked_object,image,x,y,width,height):
+        overlay = image.copy()
+        stroke = 4
+        linetype = cv2.LINE_4
+
+        top,left=y,x
+        bottom,right=top+height,left+width
+        # if tracked_object.tracking_converged() and tracked_object.recognized():
+        pad = 3
+        cut_rectangle_bbox = (top - pad, right + pad, bottom + pad, left - pad)
+        p1 = (cut_rectangle_bbox[3], cut_rectangle_bbox[0])
+        p2 = (cut_rectangle_bbox[1], cut_rectangle_bbox[2])
+        cv2.rectangle(overlay, (left, top), (right, bottom), self.face_background_color, cv2.FILLED,
+                      lineType=linetype)
+
+        cv2.rectangle(overlay, p1, p2, self.face_border_color,cv2.FILLED)
+        #draw_cut_rectangle(overlay, cut_rectangle_bbox, self.face_corner_color, stroke, linetype)
+
+        person=self.persondb[tracked_object.class_id()]
+        avatar=np.asarray(person.avatar)
+        
+        resized_face_image=cv2.resize(avatar,(32,32))
+
+        alpha_mask=np.ones(resized_face_image.shape[0:2])
+        overlay_image_alpha(overlay,resized_face_image,(x+9,y+9),alpha_mask)
+
+
+        alpha = 0.95
+        cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
+
+
+
+
+    def draw_landmarks(self,tracked_object,image,color):
+        alpha=0.05
+        full_overlay = image.copy()
+        linetype = cv2.LINE_4
+        for landmark,position in tracked_object.landmarks().items():
+            if len(position)==1:
+                center=position[0]
+                cv2.circle(full_overlay,center,3,color,lineType=linetype)
+            else:
+                (left, bottom), (right, top) = position
+                cv2.rectangle(full_overlay, (left, top), (right, bottom), color, cv2.FILLED,lineType=linetype)
+        cv2.addWeighted(full_overlay, alpha, image, 1 - alpha, 0, image)
 
 
     def draw_box(self, tracked_object, image, color):
-        alpha = 0.1
+        alpha = 0.95
         overlay = image.copy()
-        stroke = 1
+        stroke = 6
         linetype = cv2.LINE_4
         full_overlay = image.copy()
         (top, right, bottom, left) = tracked_object.bbox()
 
-        if tracked_object.tracking_converged() and tracked_object.recognized():
-            pad = 3
-            cut_rectangle_bbox=(top-pad, right+pad, bottom+pad, left-pad)
-            draw_cut_rectangle(overlay, cut_rectangle_bbox, color, stroke, linetype)
+        #if tracked_object.tracking_converged() and tracked_object.recognized():
+        pad = 0
+        cut_rectangle_bbox=(top-pad, right+pad, bottom+pad, left-pad)
+        p1=(cut_rectangle_bbox[3],cut_rectangle_bbox[0])
+        p2 = (cut_rectangle_bbox[1], cut_rectangle_bbox[2])
 
-            alpha = math.sqrt(tracked_object.score())
-            cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
+        #draw_cut_rectangle(overlay, cut_rectangle_bbox, self.face_corner_color, stroke, linetype)
+        cv2.rectangle(overlay, p1, p2, self.face_border_color, thickness=4)
+        #alpha = math.sqrt(tracked_object.score())
+        cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
 
 
-        rectangle_color = (255, 255, 255)
-        cv2.rectangle(full_overlay, (left , top ), (right , bottom ), color, cv2.FILLED,
+        #rectangle_color = (255, 255, 255)
+        cv2.rectangle(full_overlay, (left , top ), (right , bottom ), self.face_background_color, cv2.FILLED,
                       lineType=linetype)
         #cv2.rectangle(full_overlay, (left + pad, top + pad), (right - pad, bottom - pad), color, cv2.FILLED,
         # lineType=linetype)

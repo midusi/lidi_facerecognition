@@ -30,6 +30,12 @@ class PersonsWidget(QFrame):
                            #"padding:5px;"
                            "}")
 
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setOffset(0)
+        shadow.setBlurRadius(20)
+        shadow.setColor(QtGui.QColor(128, 128, 128))
+        self.setGraphicsEffect(shadow)
+
         self.main_layout.setAlignment(Qt.AlignTop)
         self.main_layout.setSpacing(0)
         self.main_layout.setContentsMargins(0,0,0,0)

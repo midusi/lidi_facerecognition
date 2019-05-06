@@ -1,12 +1,19 @@
 from backend.tracking import TrackingStatus
 from .simple_person import SimplePersonWidget
-from PyQt5.QtCore import (QThread, Qt, pyqtSignal,pyqtSlot)
+from PyQt5.QtCore import (QThread, Qt, pyqtSignal,pyqtSlot,)
 import time
 from PyQt5.QtWidgets import QFrame,QWidget,QLabel,QApplication, QHBoxLayout, QVBoxLayout,QGraphicsDropShadowEffect,\
     QSizePolicy
+from PyQt5 import QtGui
 
 from .persons import PersonsWidget
 from ..flow_layout import FlowLayout
+
+class QHLine(QFrame):
+    def __init__(self,parent=None):
+        super().__init__(parent=parent)
+        self.setFrameShape(QFrame.HLine)
+        self.setFrameShadow(QFrame.Sunken)
 
 class LastSeenWidget(QFrame):
 
@@ -18,25 +25,38 @@ class LastSeenWidget(QFrame):
         self.last_seen_timestamp={}
         self.max_persons_in_display=max_persons_in_display
         self.time_limit=time_limit
-
+        self.avatar_size=96
         self.person_db = person_db
         self.person_widgets={ id:SimplePersonWidget(person.full_name(), person.avatar) for (id,person) in person_db.items()}
         self.currently_displayed_id=[]
         self.title = title
+        self.setup_widgets()
+
+    def setup_widgets(self):
         self.main_layout = self.generate_main_layout()
 
-        self.title = self.generate_title(title)
-        self.main_layout.addWidget(self.title)
+
+        #self.main_layout.addWidget(QHLine())
 
         self.persons_detected_layout = self.generate_persons_detected_layout()
+        self.main_layout.addLayout(self.persons_detected_layout)
+
+
+        self.title_widget = self.generate_title(self.title)
+        self.main_layout.addWidget(self.title_widget)
 
         self.setStyleSheet("LastSeenWidget {width:100%;"
-                           # "margin-top:30px;"
-                           # "background-color:#333333;"
                            "background-color:white;"
                            "padding:0px;"
                            "margin:0px;"
+                           f"min-height:{self.avatar_size*3//2}px;"
                            "}")
+
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setOffset(0)
+        shadow.setBlurRadius(20)
+        shadow.setColor(QtGui.QColor(128, 128, 128))
+        self.setGraphicsEffect(shadow)
 
         self.main_layout.setAlignment(Qt.AlignTop)
         self.main_layout.setSpacing(0)
@@ -46,7 +66,7 @@ class LastSeenWidget(QFrame):
         # sp.setHorizontalStretch(1)
         # sp.setVerticalStretch(0.25)
         self.setSizePolicy(sp)
-        self.main_layout.addLayout(self.persons_detected_layout)
+
 
         self.setLayout(self.main_layout)
 
@@ -54,6 +74,7 @@ class LastSeenWidget(QFrame):
         persons_detected_layout = FlowLayout()
         persons_detected_layout.setSpacing(0)
         persons_detected_layout.setContentsMargins(5,5,5,5)
+        persons_detected_layout.setAlignment(Qt.AlignCenter)
         return persons_detected_layout
 
 
@@ -66,17 +87,18 @@ class LastSeenWidget(QFrame):
 
         title_layout = QLabel()
         title_layout.setStyleSheet("QLabel {"
-                                   "font-size:24px;"
+                                   "font-size:16px;"
                                    "color:BA1234;"
-                                   "border-right:5px solid black;"
-                                   "border-bottom:5px solid black;"
+                                   #"border-right:5px solid black;"
+                                   #"border-bottom:5px solid black;"
                                    "width:100%;"
-                                   "margin:0px;"
+                                   "margin:5px;"
                                    "padding:0px;"
-                                   "min-height:64px;"
+                                   #"min-height:64px;"
                                    "}")
         title_layout.setText(title)
-        title_layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        #title_layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        title_layout.setAlignment(Qt.AlignCenter)
 
         return title_layout
 
@@ -105,17 +127,20 @@ class LastSeenWidget(QFrame):
 
         self.update_timestamps(tracked_objects)
         ids=self.latest_person_ids(self.max_persons_in_display,self.time_limit)
+        ids+=[2,6,8]
 
-
+        modified=False
         # remove widgets for stale ids
         for id in self.currently_displayed_id:
             if not id in ids:
                 self.persons_detected_layout.removeWidget(self.person_widgets[id])
+                modified=True
         # add widget for new ids
         for id in ids:
             if not id in self.currently_displayed_id:
                 person_widget=self.person_widgets[id]
                 self.persons_detected_layout.addWidget(person_widget)
+                modified = True
 
         # update currently displayed ids
         self.currently_displayed_id=ids

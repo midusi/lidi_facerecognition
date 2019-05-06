@@ -9,12 +9,12 @@ model_path=os.path.join(data_dir,"lidi_face_model.pkl")
 face_image_size=(100,100)
 
 
-number_of_times_to_upsample=1
+number_of_times_to_upsample=0
 frame_skip=8
 
 class Input:
-    #stream_url = "/dev/video0"
-    stream_url = "rtsp://163.10.22.229/live.sdp"
+    stream_url = "/dev/video0"
+    #stream_url = "rtsp://163.10.22.229/live.sdp"
     # stream_url="http://163.10.22.229/video2.mjpg"
     # ffplay -fflags nobuffer -rtsp_transport udp rtsp://163.10.22.229/live.sdp
 
@@ -45,8 +45,8 @@ recognition=FaceRecognition()
 
 class Learning:
     # save images of the faces of people unrecognized by the system
-    save_unrecognized_peoples_faces = True
-    save_recognized_peoples_faces = True
+    save_unrecognized_peoples_faces = False
+    save_recognized_peoples_faces = False
     save_full_images = False
 learning=Learning()
 

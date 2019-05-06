@@ -8,32 +8,18 @@ from .avatar import AvatarLabel
 
 class SimplePersonWidget(QFrame):
 
-    def __init__(self, name, avatar, parent=None):
+    def __init__(self, name, avatar, parent=None,width=96):
         super().__init__(parent=parent)
         layout = QVBoxLayout()
         self.setLayout(layout)
-        self.width = 96
+        self.width = width
         layout.setSizeConstraint(QVBoxLayout.SetMinimumSize)
         layout.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
         self.avatar_widget = self.generate_avatar_widget(avatar)
-        # self.avatar_layout = QGridLayout()
-        # self.avatar_layout.addWidget(self.avatar_widget)
-        # layout.addLayout(self.avatar_layout)
         layout.addWidget(self.avatar_widget)
-
-
-
         self.name_widget = self.generate_name_widget(name)
-        # self.name_layout = QGridLayout()
-        # self.name_layout.addWidget(self.name_widget)
-        # layout.addLayout(self.name_layout)
-        #layout.addWidget(self.name_widget)
-
         self.set_style()
-
-
         self.setMaximumSize(self.sizeHint())
-
 
     def set_style(self):
         # sp = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)

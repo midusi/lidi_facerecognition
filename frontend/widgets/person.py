@@ -79,7 +79,7 @@ class PersonWidget(QFrame):
 
         person_label = QLabel()
         person_label.setStyleSheet("QLabel {"
-                                   "font-size:28px;}")
+                                   "font-size:24px;}")
         person_label.setText(name)
         name_layout.addWidget(person_label, 0, Qt.AlignLeft)
 

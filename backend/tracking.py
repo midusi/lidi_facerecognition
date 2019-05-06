@@ -9,10 +9,11 @@ class TrackingStatus(Enum):
 
 
 class TrackedObject:
-    def __init__(self,settings):
+    def __init__(self,settings,max_window_size=30):
         self.detections=[]
         self.times=[]
         self.settings=settings
+        self.max_window_size=max_window_size
     def __str__(self):
         last_position=""
         n=len(self.detections)
@@ -26,7 +27,7 @@ class TrackedObject:
     def add_frame(self,frame,time):
         self.detections.append(frame)
         self.times.append(time)
-        if len(self.detections)>30:
+        if len(self.detections)>self.max_window_size:
             del self.detections[0]
             del self.times[0]
 
@@ -46,7 +47,8 @@ class TrackedObject:
 
     def bbox(self):
         return self.last_detection().bbox
-
+    def landmarks(self):
+        return self.last_detection().landmarks
     def class_id(self):
         class_id, probability = self.maximum_a_posteriori()
         return class_id
