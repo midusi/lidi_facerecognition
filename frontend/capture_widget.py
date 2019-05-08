@@ -19,10 +19,6 @@ import time
 def get_epochtime_ms():
     return round(datetime.utcnow().timestamp() * 1000)
 
-
-
-
-
 class CaptureWidget(QFrame):
 
     def __init__(self,persondb,parent=None):
@@ -37,7 +33,6 @@ class CaptureWidget(QFrame):
 
         self.label_background_color=(0,1,71)
         self.label_border_color = (0,1,40)
-        #self.label_border_color = (0, 1, 160)
 
         self.initialize_video_label()
 
