@@ -6,7 +6,8 @@ from PyQt5.QtWidgets import QFrame,QWidget,QLabel,QApplication, QHBoxLayout, QVB
     QSizePolicy
 from PyQt5 import QtGui
 
-from .persons import PersonsWidget
+from .persons import PersonWidget
+
 from ..flow_layout import FlowLayout
 
 class QHLine(QFrame):
@@ -14,6 +15,7 @@ class QHLine(QFrame):
         super().__init__(parent=parent)
         self.setFrameShape(QFrame.HLine)
         self.setFrameShadow(QFrame.Sunken)
+
 
 class LastSeenWidget(QFrame):
 

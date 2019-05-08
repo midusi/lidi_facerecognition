@@ -5,7 +5,7 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import QFrame,QWidget,QLabel,QApplication, QHBoxLayout, QVBoxLayout,QGraphicsDropShadowEffect,\
     QSizePolicy
 from backend.tracking import TrackingStatus
-
+from .. import qtutils
 class PersonWidget(QFrame):
 
     def __init__(self, name, description, avatar, status, parent=None):
@@ -25,8 +25,21 @@ class PersonWidget(QFrame):
         self.name_widget = self.generate_name_widget(name, description)
         layout.addWidget(self.name_widget)
         self.status_icon, self.status_icon_pixmap = self.generate_status_icon(status)
-        # layout.addStretch()
-        # layout.addWidget(self.logo)
+        layout.addStretch()
+
+        self.last_seen_time=QLabel()
+        self.last_seen_time.setStyleSheet("QLabel{"
+                                          "font-size:24px;"
+                                          "color:black;"
+                                          "}")
+        layout.addWidget(self.last_seen_time)
+
+    def update_last_seen_time(self,minutes):
+        minutes=int(minutes)
+        if minutes>0:
+            self.last_seen_time.setText(f"{minutes}m")
+        else:
+            self.last_seen_time.setText(f"")
 
     def generate_status_icon(self, status):
         # for animations https://stackoverflow.com/questions/10261265/showing-a-gif-animation-in-qlabel
@@ -49,25 +62,23 @@ class PersonWidget(QFrame):
         return status_icon, status_icon_pixmap
 
     def set_style(self):
-        sp = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        sp = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sp.setHorizontalStretch(10)
         self.setSizePolicy(sp)
 
-        self.setStyleSheet("PersonWidget {margin:0px; padding:10px; "
+        self.setStyleSheet("PersonWidget {margin:0px; padding:5px; "
                            # "border-radius:3px;"
                            # "border: 1px solid black; "
-                           "border-bottom: 2px solid black; "
+                           #"border-bottom: 2px solid black; "
+                           "margin-bottom:2px;"
                            "background-color:white;"
                            "color: black;"
-                           "min-width:120px;"
-
+                           #"min-height:100px;"
+                           #"width:100%"
                            "}")
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setOffset(0)
-        shadow.setBlurRadius(13)
-        shadow.setColor(QtGui.QColor(128, 128, 128))
 
-        self.setGraphicsEffect(shadow)
+        qtutils.add_drop_shadow(self)
+
 
     def generate_name_widget(self, name, description):
         container = QFrame()

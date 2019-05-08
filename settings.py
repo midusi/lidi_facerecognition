@@ -9,12 +9,12 @@ model_path=os.path.join(data_dir,"lidi_face_model.pkl")
 face_image_size=(100,100)
 
 
-number_of_times_to_upsample=0
+number_of_times_to_upsample=1
 frame_skip=8
 
 class Input:
-    stream_url = "/dev/video0"
-    #stream_url = "rtsp://163.10.22.229/live.sdp"
+    #stream_url = "/dev/video0"
+    stream_url = "rtsp://163.10.22.229/live.sdp"
     # stream_url="http://163.10.22.229/video2.mjpg"
     # ffplay -fflags nobuffer -rtsp_transport udp rtsp://163.10.22.229/live.sdp
 
@@ -85,6 +85,8 @@ tracking = TrackingSettings()
 class Client:
     throttle_requests = 1 / 30
     display_delay = 0
+    font="Arial"
+
 
 client=Client()
 
