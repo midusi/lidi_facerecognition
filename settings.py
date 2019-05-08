@@ -32,8 +32,11 @@ gui=GUI()
 
 
 class FaceRecognition:
+    LOCALIZATION_HOG="hog"
+    LOCALIZATION_CNN = "cnn"
     #
-    face_image_extension_factor=1
+    face_image_extension_factor = 1
+    localization_method = LOCALIZATION_HOG
 
     # downsampling to apply before recognition
     downsampling = 1

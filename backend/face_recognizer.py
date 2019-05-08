@@ -37,7 +37,7 @@ class FaceRecognizer:
         self.face_classifier.update_face_classification_model(model)
 
     def detect_and_embeddings(self,image):
-        face_locations = face_recognition.face_locations(image,                                                        number_of_times_to_upsample=self.settings.number_of_times_to_upsample)
+        face_locations = face_recognition.face_locations(image,                                                        number_of_times_to_upsample=self.settings.number_of_times_to_upsample,model=self.settings.recognition.localization_method)
         face_landmarks= face_recognition.face_landmarks(image,face_locations,model="small")
 
         face_encodings = face_recognition.face_encodings(image, face_locations)
