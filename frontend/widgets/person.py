@@ -62,7 +62,7 @@ class PersonWidget(QFrame):
         return status_icon, status_icon_pixmap
 
     def set_style(self):
-        sp = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sp = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
         sp.setHorizontalStretch(10)
         self.setSizePolicy(sp)
 
